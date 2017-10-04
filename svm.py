@@ -41,7 +41,7 @@ class SVM:
     dW = X.T.dot(X_mask) / num_train + 2 * reg * W
     return loss, dW
 
-  def fit(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=4000, batch_size=1000, verbose=False):
+  def fit(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=4000, verbose=False):
     """
     Train this linear classifier using stochastic gradient descent.
 

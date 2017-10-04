@@ -1,5 +1,33 @@
 import numpy as np
 
+'''
+This file contains functions for the neural network implementation.
+It is based on cs231n implementation that Volodymyr wrote. However,
+it was simplified a bit, because:
+
+- Optimization is a simple GD - there a variety of optimizations (e.g. adam)
+  were implemented in a separate class.
+- We only use a ReLU activation function.
+- Some functions could be simplified for lack of particular requirements for them.
+
+The structure of this file is as follows:
+- Above the class definition we have functions for various layers. Typically each
+  of them has 2 parts - a forward pass and a backward pass.
+- Softmax is used for the loss function (TODO: try other options)
+- ReLU is used for activation (TODO: Try leaky relu if >2 layers don't work)
+
+Obviously using this network is great advantage to us because I already know that
+it was tested on a rigorous test set and with minimum engineering it 
+can be adapted for this competition. But either way, we would try to build
+something similar from scratch if we were doing the compeition without Internet usage -
+I think that idea of separating layers into individual functions is awesome, as it allows
+you to stack them easy. Similarly, in our models we try to have fit() and predict() methods
+just like scikit does - again a nice API that would allow us to combine these models
+under an ensemble.
+
+This concludes my monologue, thanks for reading! V.L.
+'''
+
 def affine_forward(x, w, b):
   """
   Computes the forward pass for an affine (fully-connected) layer.
@@ -83,12 +111,18 @@ def relu_backward(dout, cache):
   return dx
 
 def affine_relu_forward(x, w, b):
+  '''
+  Does affine + relu (in that order)
+  '''
   a, fc_cache = affine_forward(x, w, b)
   out, relu_cache = relu_forward(a)
   cache = (fc_cache, relu_cache)
   return out, cache
 
 def affine_relu_backward(dout, cache):
+  '''
+  Does backward pass for affine + relu (in that order)
+  '''
   fc_cache, relu_cache = cache
   da = relu_backward(dout, relu_cache)
   dx, dw, db = affine_backward(da, fc_cache)
@@ -243,7 +277,7 @@ class NeuralNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=1e-1, num_iters=100, verbose=False):
+  def fit(self, X, y, learning_rate=1, num_iters=50, verbose=False):
     if verbose:
       print('Started fitting the neural network!')
 
@@ -269,4 +303,5 @@ class NeuralNet(object):
     return loss_history
 
   def predict(self, X):
-    return loss(X)
+    pr = self.loss(X)
+    return self.loss(X).argmax(axis=1)

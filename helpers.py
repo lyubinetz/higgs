@@ -30,14 +30,22 @@ def standardize(x):
   return std_data
 
 '''
-Computes means for each column, while skipping invalid values. Results are
-groupped by the assigned class (b or s).
+Computes means for each column, while skipping invalid values.
 '''
 def compute_means_for_columns(data):
-  pass
+  mean_map = {}
+  for i in range(data.shape[1]):
+    good_positions = np.where(data[:, i] > -999)    
+    col = data[:, i][good_positions]
+    mean_map[i] = np.mean(col)
+
+  return mean_map
 
 '''
 Replaces -999 in the given data with means computed by compute_means_for_columns()
+Mutates data.
 '''
-def replace_missing_values_with_means(data, means):
-  pass
+def replace_missing_values_with_means(data, mean_map):
+  for i in range(data.shape[1]):
+    bad_positions = np.where(data[:, i] <= -999)
+    data[:, i][bad_positions] = mean_map[i]

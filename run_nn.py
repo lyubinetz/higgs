@@ -10,14 +10,14 @@ called prediction.csv with test set classification.
 def run(validation, classify_test):
   X_train, y_train = read_train_data('datasets/train.csv')
 
-  #mean_map = compute_means_for_columns(X_train)
-  #replace_missing_values_with_means(X_train, mean_map)
+  mean_map = compute_means_for_columns(X_train)
+  replace_missing_values_with_means(X_train, mean_map)
   X_train = standardize(X_train)
   
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.9, X_train, labels=y_train)
 
-  nn = NeuralNet([1000], reg = 0.005)
+  nn = NeuralNet([400], reg = 0.005)
   # Train the net
   nn.fit(X_train, y_train, verbose=True)
 
@@ -42,4 +42,4 @@ def run(validation, classify_test):
     test_predictions.to_csv('prediction.csv', sep=',', columns=['Id', 'Prediction'], index=False)
 
 if __name__ == '__main__':
-  run(True, False)
+  run(False, True)

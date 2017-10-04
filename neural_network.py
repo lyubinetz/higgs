@@ -277,7 +277,7 @@ class NeuralNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=1, num_iters=50, verbose=False):
+  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False):
     if verbose:
       print('Started fitting the neural network!')
 
@@ -286,7 +286,7 @@ class NeuralNet(object):
     
     # Run stochastic gradient descent to optimize W
     loss_history = []
-    for it in xrange(num_iters):
+    for it in range(num_iters):
       # Evaluate loss and gradient
       loss, grad = self.loss(X, y=y)
       loss_history.append(loss)

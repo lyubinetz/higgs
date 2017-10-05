@@ -9,7 +9,7 @@ called prediction.csv with test set classification.
 def run():
   X_train, y_train = read_train_data('datasets/train.csv')
 
-  mean_map = compute_means_for_columns(X_train)
+  mean_map, _ = compute_means_and_vars_for_columns(X_train)
   replace_missing_values_with_means(X_train, mean_map)
   X_train = standardize(X_train)
   

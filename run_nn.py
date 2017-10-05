@@ -8,17 +8,20 @@ called prediction.csv with test set classification.
 '''
 def run(validation, classify_test):
   X_train, y_train = read_train_data('datasets/train.csv')
+  X_test, X_test_ids = read_test_data('datasets/test.csv')
 
-  mean_map = compute_means_for_columns(X_train)
+  X_combined = np.vstack((X_train, X_test))
+  mean_map, var_map = compute_means_and_vars_for_columns(X_train)
+
   replace_missing_values_with_means(X_train, mean_map)
-  X_train = standardize(X_train)
+  X_train = standardize(X_train, mean=mean_map, var=var_map)
   
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.9, X_train, labels=y_train)
 
-  nn = NeuralNet([30], reg = 0.005)
+  nn = NeuralNet([400], reg=0.005)
   # Train the net
-  nn.fit(X_train, y_train, verbose=True)
+  nn.fit(X_train, y_train, verbose=True, num_iters=1000)
 
   # Compute validation score
   if validation:
@@ -29,9 +32,8 @@ def run(validation, classify_test):
 
   if classify_test:
     # Compute result for submission
-    X_test, X_test_ids = read_test_data('datasets/test.csv')
     replace_missing_values_with_means(X_test, mean_map)
-    X_test = standardize(X_test)
+    X_test = standardize(X_test, mean=mean_map, var=var_map)
     test_predictions = nn.predict(X_test)
 
     # HACK: Right now predictions are 0,1 , and we need -1,1

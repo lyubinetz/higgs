@@ -1,7 +1,7 @@
 import numpy as np
 
 def load_csv_data(data_path, sub_sample=False):
-  """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
+  '''Loads data and returns y (class labels), tX (features) and ids (event ids)'''
   y = np.genfromtxt(data_path, delimiter=",", skip_header=1, dtype=str, usecols=1)
   x = np.genfromtxt(data_path, delimiter=",", skip_header=1)
   ids = x[:, 0].astype(np.int)
@@ -34,12 +34,12 @@ def read_test_data(fname):
   return X, ids
 
 def create_csv_submission(ids, y_pred, name):
-  """
+  '''
   Creates an output file in csv format for submission to kaggle
   Arguments: ids (event ids associated with each prediction)
              y_pred (predicted class labels)
              name (string name of .csv output file to be created)
-  """
+  '''
   with open(name, 'w') as csvfile:
     fieldnames = ['Id', 'Prediction']
     writer = csv.DictWriter(csvfile, delimiter=",", fieldnames=fieldnames)
@@ -50,22 +50,32 @@ def create_csv_submission(ids, y_pred, name):
 '''
 Makes each column to be Gaussian(0, 1)
 '''
-def standardize(x):
-  cd = x - np.mean(x, axis=0)
-  std_data = cd / np.std(cd, axis=0)  
+def standardize(x, mean=None, var=None):
+  if mean is None:
+    mean = np.mean(x, axis=0)
+
+  if var is None:
+    var = np.std(cd, axis=0)
+
+  cd = x - mean
+  std_data = cd / var
+
   return std_data
 
 '''
 Computes means for each column, while skipping invalid values.
 '''
-def compute_means_for_columns(data):
-  mean_map = {}
+def compute_means_and_vars_for_columns(data):
+  mean_map = np.zeros(data.shape[1])
+  var_map = np.zeros(data.shape[1])
+
   for i in range(data.shape[1]):
     good_positions = np.where(data[:, i] > -999)    
     col = data[:, i][good_positions]
     mean_map[i] = np.mean(col)
+    var_map[i] = np.std(col)
 
-  return mean_map
+  return mean_map, var_map
 
 '''
 Replaces -999 in the given data with means computed by compute_means_for_columns()

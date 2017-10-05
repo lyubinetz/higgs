@@ -1,10 +1,10 @@
 import numpy as np
 
 def compute_mse_loss(y, tx, w):
-    '''
-    Calculates the MSE loss.
-    '''
-    return np.power(y - tx.dot(w), 2).sum() / (2 * y.shape[0])
+  '''
+  Calculates the MSE loss.
+  '''
+  return np.power(y - tx.dot(w), 2).sum() / (2 * y.shape[0])
 
 def least_squares(y, tx):
   '''

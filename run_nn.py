@@ -17,11 +17,11 @@ def run(validation, classify_test):
   X_train = standardize(X_train, mean=mean_map, var=var_map)
   
   if validation:
-    X_train, y_train, X_val, y_val = split_data(0.9, X_train, labels=y_train)
+    X_train, y_train, X_val, y_val = split_data(0.9, X_train, y_train)
 
   nn = NeuralNet([444], reg=0.005)
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=1200)
+  nn.fit(X_train, y_train, verbose=True, num_iters=1500)
 
   # Compute validation score
   if validation:
@@ -43,4 +43,5 @@ def run(validation, classify_test):
     create_csv_submission(X_test_ids, test_predictions, 'prediction.csv')
 
 if __name__ == '__main__':
+  np.random.seed(777)
   run(False, True)

@@ -22,3 +22,6 @@ def ridge_regression(y, tx, lambda_):
   w = np.linalg.inv((xtx + lambda_ * np.identity(xtx.shape[0]))).dot(tx.T).dot(y)
   mse_ridge = compute_mse_loss(y, tx, w) + lambda_ * (w * w).sum()
   return w, mse_ridge
+
+def linear_predict(w, tx):
+  return tx.dot(w)

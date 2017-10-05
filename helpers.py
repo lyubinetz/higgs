@@ -20,18 +20,18 @@ def load_csv_data(data_path, sub_sample=False):
 
   return yb, input_data, ids
 
-def read_train_data(fname):
+def read_train_data(fname, sub_sample=False):
   '''
   This function reads training data from CSV file.
   '''
-  y, X, ids = load_csv_data(fname)
+  y, X, ids = load_csv_data(fname, sub_sample)
   return X, y
 
-def read_test_data(fname):
+def read_test_data(fname, sub_sample=False):
   '''
   This function reads test data from CSV file.
   '''
-  y, X, ids = load_csv_data(fname)
+  y, X, ids = load_csv_data(fname, sub_sample)
   return X, ids
 
 def create_csv_submission(ids, y_pred, name):
@@ -102,3 +102,16 @@ def split_data(frac, data, labels):
   not_in_indices = [x for x in range(n) if x not in indices_set]
 
   return data[indices], labels[indices], data[not_in_indices], labels[not_in_indices]
+
+def stack_ones(x):
+  return np.c_[np.ones(x.shape[0]), x]
+
+def predict_labels(weights, data):
+  '''
+  Generates class predictions given weights, and a test data matrix
+  '''
+  y_pred = np.dot(data, weights)
+  y_pred[np.where(y_pred <= 0.5)] = 0 # Note that this differs from what was given in github - we use 0
+  y_pred[np.where(y_pred > 0.5)] = 1
+
+  return y_pred

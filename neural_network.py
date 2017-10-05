@@ -173,7 +173,6 @@ class NeuralNet(object):
     self.reg = reg
     self.hidden_dims = hidden_dims
     self.num_layers = 1 + len(hidden_dims)
-    self.dtype = dtype
     self.params = {}
 
     for i in range(len(hidden_dims)):

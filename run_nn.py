@@ -19,9 +19,9 @@ def run(validation, classify_test):
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.9, X_train, labels=y_train)
 
-  nn = NeuralNet([400], reg=0.005)
+  nn = NeuralNet([444], reg=0.005)
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=1000)
+  nn.fit(X_train, y_train, verbose=True, num_iters=1200)
 
   # Compute validation score
   if validation:
@@ -43,4 +43,4 @@ def run(validation, classify_test):
     create_csv_submission(X_test_ids, test_predictions, 'prediction.csv')
 
 if __name__ == '__main__':
-  run(True, False)
+  run(False, True)

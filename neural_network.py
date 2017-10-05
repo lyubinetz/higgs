@@ -170,8 +170,6 @@ class NeuralNet(object):
     - weight_scale: Scalar giving the standard deviation for random
       initialization of the weights.
     '''
-    self.use_batchnorm = use_batchnorm
-    self.use_dropout = dropout > 0
     self.reg = reg
     self.hidden_dims = hidden_dims
     self.num_layers = 1 + len(hidden_dims)

@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 
 def load_csv_data(data_path, sub_sample=False):
   '''Loads data and returns y (class labels), tX (features) and ids (event ids)'''
@@ -91,7 +92,7 @@ Splits data into two halfs with frac being the fraction of the data to go into t
 half. Frac must be between 0 and 1. Optionally takes labels as well, and splits them
 identically to data.
 '''
-def split_data(frac, data, labels=[]):
+def split_data(frac, data, labels):
   if frac < 0 or frac > 1:
     raise Exception('Illegal frac value in split_data!')
 
@@ -100,7 +101,4 @@ def split_data(frac, data, labels=[]):
   indices_set = set(indices)
   not_in_indices = [x for x in range(n) if x not in indices_set]
 
-  if len(labels) == 0:
-    return data[indices], data[not_in_indices]
-  else:
-    return data[indices], labels[indices], data[not_in_indices], labels[not_in_indices]
+  return data[indices], labels[indices], data[not_in_indices], labels[not_in_indices]

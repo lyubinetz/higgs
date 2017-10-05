@@ -1,5 +1,4 @@
 import numpy as numpy
-import pandas as pd
 from helpers import *
 from neural_network import *
 
@@ -17,7 +16,7 @@ def run(validation, classify_test):
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.9, X_train, labels=y_train)
 
-  nn = NeuralNet([400], reg = 0.005)
+  nn = NeuralNet([30], reg = 0.005)
   # Train the net
   nn.fit(X_train, y_train, verbose=True)
 
@@ -34,12 +33,12 @@ def run(validation, classify_test):
     replace_missing_values_with_means(X_test, mean_map)
     X_test = standardize(X_test)
     test_predictions = nn.predict(X_test)
+
     # HACK: Right now predictions are 0,1 , and we need -1,1
     test_predictions = 2 * test_predictions
     test_predictions = test_predictions - 1
 
-    test_predictions = pd.DataFrame(np.array([X_test_ids, test_predictions]).T, columns=['Id', 'Prediction'])
-    test_predictions.to_csv('prediction.csv', sep=',', columns=['Id', 'Prediction'], index=False)
+    create_csv_submission(X_test_ids, test_predictions, 'prediction.csv')
 
 if __name__ == '__main__':
-  run(False, True)
+  run(True, False)

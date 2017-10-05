@@ -1,5 +1,4 @@
 import numpy as numpy
-import pandas as pd
 from helpers import *
 from svm import *
 
@@ -22,12 +21,12 @@ def run():
   replace_missing_values_with_means(X_test, mean_map)
   X_test = standardize(X_test)
   test_predictions = svm.predict(X_test)
+
   # HACK: Right now predictions are 0,1 , and we need -1,1
   test_predictions = 2 * test_predictions
   test_predictions = test_predictions - 1
 
-  test_predictions = pd.DataFrame(np.array([X_test_ids, test_predictions]).T, columns=['Id', 'Prediction'])
-  test_predictions.to_csv('prediction.csv', sep=',', columns=['Id', 'Prediction'], index=False)
+  create_csv_submission(X_test_ids, test_predictions, 'prediction.csv')
 
 if __name__ == '__main__':
   run()

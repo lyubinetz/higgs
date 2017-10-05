@@ -277,7 +277,7 @@ class NeuralNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False):
+  def fit(self, X, y, learning_rate=0.1, num_iters=10, verbose=False):
     if verbose:
       print('Started fitting the neural network!')
 

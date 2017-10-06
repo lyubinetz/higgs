@@ -55,10 +55,11 @@ def standardize(x, mean=None, var=None):
   if mean is None:
     mean = np.mean(x, axis=0)
 
+  cd = x - mean
+
   if var is None:
     var = np.std(cd, axis=0)
 
-  cd = x - mean
   std_data = cd / var
 
   return std_data
@@ -97,7 +98,7 @@ def split_data(frac, data, labels):
     raise Exception('Illegal frac value in split_data!')
 
   n = data.shape[0]
-  indices = np.random.choice(n, int(n * frac))
+  indices = np.random.choice(n, int(n * frac), replace=False)
   indices_set = set(indices)
   not_in_indices = [x for x in range(n) if x not in indices_set]
 

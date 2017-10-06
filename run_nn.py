@@ -11,17 +11,19 @@ def run(validation, classify_test):
   X_test, X_test_ids = read_test_data('datasets/test.csv')
 
   X_combined = np.vstack((X_train, X_test))
-  mean_map, var_map = compute_means_and_vars_for_columns(X_train)
+  mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
   replace_missing_values_with_means(X_train, mean_map)
-  X_train = standardize(X_train, mean=mean_map, var=var_map)
+  X_train = np.c_[X_train, np.power(X_train, 2)]
+  X_train = standardize(X_train)
   
   if validation:
-    X_train, y_train, X_val, y_val = split_data(0.9, X_train, y_train)
+    X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
+    print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = NeuralNet([444], reg=0.005)
+  nn = NeuralNet([666], reg=0.001, input_dim=60)
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=1500)
+  nn.fit(X_train, y_train, verbose=True, num_iters=1000, learning_rate=2)
 
   # Compute validation score
   if validation:
@@ -33,7 +35,8 @@ def run(validation, classify_test):
   if classify_test:
     # Compute result for submission
     replace_missing_values_with_means(X_test, mean_map)
-    X_test = standardize(X_test, mean=mean_map, var=var_map)
+    X_test = np.c_[X_test, np.power(X_test, 2)]
+    X_test = standardize(X_test)
     test_predictions = nn.predict(X_test)
 
     # HACK: Right now predictions are 0,1 , and we need -1,1

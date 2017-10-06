@@ -123,6 +123,44 @@ def affine_relu_backward(dout, cache):
   dx, dw, db = affine_backward(da, fc_cache)
   return dx, dw, db
 
+def dropout_forward(x, dropout_param):
+  '''
+  Performs the forward pass for dropout - zeroes p percent of inputs.
+  '''
+  p, mode = dropout_param['p'], dropout_param['mode']
+
+  mask = None
+  out = None
+
+  if mode == 'train':
+    mask = np.random.random(x.shape)
+    mask[mask < p] = 0
+    mask[mask > 0] = 1
+    out = x * mask
+  elif mode == 'test':
+    out = x
+
+  cache = (dropout_param, mask)
+  out = out.astype(x.dtype, copy=False)
+
+  return out, cache
+
+
+def dropout_backward(dout, cache):
+  '''
+  Perform the backward pass for (inverted) dropout.
+  '''
+  dropout_param, mask = cache
+  mode = dropout_param['mode']
+
+  dx = None
+  if mode == 'train':
+    dx = np.array(dout, copy=True)
+    dx[mask == 0] = 0
+  elif mode == 'test':
+    dx = dout
+  return dx
+
 def softmax_loss(x, y):
   '''
   Computes the loss and gradient for softmax classification.
@@ -155,6 +193,8 @@ class NeuralNet(object):
   the architecture will be
 
   {affine - relu} x (L - 1) - affine - softmax
+
+  By default we have 30 features and 2 output classes.
   '''
 
   def __init__(self, hidden_dims, input_dim=30, num_classes=2,
@@ -227,7 +267,7 @@ class NeuralNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False):
+  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, decrease_lr_on_mistake=True):
     if verbose:
       print('Started fitting the neural network!')
 
@@ -236,10 +276,19 @@ class NeuralNet(object):
     
     # Run stochastic gradient descent to optimize W
     loss_history = []
+    ploss = 10000.0
     for it in range(num_iters):
       # Evaluate loss and gradient
       loss, grad = self.loss(X, y=y)
       loss_history.append(loss)
+
+      if decrease_lr_on_mistake and loss > ploss:
+        # Decrease LR so that we take smaller steps
+        learning_rate *= 0.8
+        if verbose:
+          print('We went the wrong way! Decreasing LR!')
+          print('New LR is ' + str(learning_rate))
+      ploss = loss
 
       # Update gradients
       for p, w in self.params.items():

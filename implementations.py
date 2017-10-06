@@ -16,7 +16,7 @@ def least_squares(y, tx):
 
 def ridge_regression(y, tx, lambda_):
   '''
-  Calculate ridge regression solution using normal euqations.
+  Calculate ridge regression solution using normal equations.
   '''
   xtx = tx.T.dot(tx) # Product of tx and its transpose
   w = np.linalg.inv((xtx + lambda_ * np.identity(xtx.shape[0]))).dot(tx.T).dot(y)

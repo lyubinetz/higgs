@@ -22,9 +22,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = NeuralNet([600], reg=0.001, input_dim=60)
+  nn = NeuralNet([30, 30], reg=0.001, input_dim=60)
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=500, learning_rate=2)
+  nn.fit(X_train, y_train, verbose=True, num_iters=100, learning_rate=2)
 
   # Compute validation score
   if validation:
@@ -48,4 +48,4 @@ def run(validation, classify_test):
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(False, True)
+  run(True, False)

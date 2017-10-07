@@ -123,44 +123,6 @@ def affine_relu_backward(dout, cache):
   dx, dw, db = affine_backward(da, fc_cache)
   return dx, dw, db
 
-def dropout_forward(x, dropout_param):
-  '''
-  Performs the forward pass for dropout - zeroes p percent of inputs.
-  '''
-  p, mode = dropout_param['p'], dropout_param['mode']
-
-  mask = None
-  out = None
-
-  if mode == 'train':
-    mask = np.random.random(x.shape)
-    mask[mask < p] = 0
-    mask[mask > 0] = 1
-    out = x * mask
-  elif mode == 'test':
-    out = x
-
-  cache = (dropout_param, mask)
-  out = out.astype(x.dtype, copy=False)
-
-  return out, cache
-
-
-def dropout_backward(dout, cache):
-  '''
-  Perform the backward pass for (inverted) dropout.
-  '''
-  dropout_param, mask = cache
-  mode = dropout_param['mode']
-
-  dx = None
-  if mode == 'train':
-    dx = np.array(dout, copy=True)
-    dx[mask == 0] = 0
-  elif mode == 'test':
-    dx = dout
-  return dx
-
 def softmax_loss(x, y):
   '''
   Computes the loss and gradient for softmax classification.
@@ -175,6 +137,7 @@ def softmax_loss(x, y):
   - loss: Scalar giving the loss
   - dx: Gradient of the loss with respect to x
   '''
+  # TODO: Rewrite this
   shifted_logits = x - np.max(x, axis=1, keepdims=True)
   Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
   log_probs = shifted_logits - np.log(Z)

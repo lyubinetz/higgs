@@ -23,9 +23,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([100], reg=0.001, input_size=X_train.shape[1])
+  nn = SimpleNet([400], reg=0.001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=200, learning_rate=2)
+  nn.fit(X_train, y_train, verbose=True, num_iters=1000, learning_rate=2)
 
   # Compute validation score
   if validation:
@@ -37,7 +37,7 @@ def run(validation, classify_test):
   if classify_test:
     # Compute result for submission
     replace_missing_values_with_means(X_test, mean_map)
-    X_test = featurize_x2(X_test)
+    X_test = featurize(X_test)
     X_test = standardize(X_test)
     test_predictions = nn.predict(X_test)
 
@@ -49,4 +49,4 @@ def run(validation, classify_test):
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(True, False)
+  run(False, True)

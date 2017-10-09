@@ -10,15 +10,15 @@ called prediction.csv with test set classification.
 '''
 def run(validation, classify_test):
   X_train, y_train = read_train_data('datasets/train.csv')
-  #X_test, X_test_ids = read_test_data('datasets/test.csv')
+  X_test, X_test_ids = read_test_data('datasets/test.csv')
 
-  X_combined = X_train # np.vstack((X_train, X_test))
+  X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
   replace_missing_values_with_means(X_train, mean_map)
   X_train = featurize_x2(X_train)
   X_train = standardize(X_train)
-  
+
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))

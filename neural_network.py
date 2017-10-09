@@ -160,14 +160,14 @@ class NeuralNet(object):
   By default we have 30 features and 2 output classes.
   '''
 
-  def __init__(self, hidden_dims, input_dim=30, num_classes=2,
+  def __init__(self, hidden_dims, input_size=30, num_classes=2,
                reg=0.0, weight_scale=1e-2):
     '''
     Initialize a new FullyConnectedNet.
 
     Inputs:
     - hidden_dims: A list of integers giving the size of each hidden layer.
-    - input_dim: An integer giving the size of the input.
+    - input_size: An integer giving the size of the input.
     - num_classes: An integer giving the number of classes to classify.
     - reg: Scalar giving L2 regularization strength.
     - weight_scale: Scalar giving the standard deviation for random
@@ -180,7 +180,7 @@ class NeuralNet(object):
 
     for i in range(len(hidden_dims)):
       if i == 0:
-        inp_sz = input_dim
+        inp_sz = input_size
       else:
         inp_sz = hidden_dims[i - 1]
       self.params['W' + str(i + 1)] = np.random.normal(0, weight_scale, (inp_sz, hidden_dims[i]))
@@ -225,8 +225,8 @@ class NeuralNet(object):
     grads['W' + str(self.num_layers)] += self.reg * self.params['W' + str(self.num_layers)]
 
     for i in range(len(hidden_dims), 0, -1):
-        gradx, grads['W' + str(i)], grads['b' + str(i)] = affine_relu_backward(gradx, cache[i - 1])
-        grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
+      gradx, grads['W' + str(i)], grads['b' + str(i)] = affine_relu_backward(gradx, cache[i - 1])
+      grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
 
     return loss, grads
 
@@ -235,7 +235,7 @@ class NeuralNet(object):
       print('Started fitting the neural network!')
 
     num_train, dim = X.shape
-    num_classes = np.max(y) + 1 # assume y takes values 0...K-1 where K is number of classes
+    num_classes = 2
     
     # Run stochastic gradient descent to optimize W
     loss_history = []

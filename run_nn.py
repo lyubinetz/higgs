@@ -1,5 +1,6 @@
 import numpy as numpy
 from helpers import *
+from simple_net import *
 from neural_network import *
 from featurization import *
 
@@ -9,9 +10,9 @@ called prediction.csv with test set classification.
 '''
 def run(validation, classify_test):
   X_train, y_train = read_train_data('datasets/train.csv')
-  X_test, X_test_ids = read_test_data('datasets/test.csv')
+  #X_test, X_test_ids = read_test_data('datasets/test.csv')
 
-  X_combined = np.vstack((X_train, X_test))
+  X_combined = X_train # np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
   replace_missing_values_with_means(X_train, mean_map)
@@ -22,7 +23,7 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = NeuralNet([30, 30], reg=0.001, input_dim=60)
+  nn = SimpleNet([500, 500], reg=0.001, input_size=X_train.shape[1])
   # Train the net
   nn.fit(X_train, y_train, verbose=True, num_iters=100, learning_rate=2)
 

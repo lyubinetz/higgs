@@ -15,7 +15,7 @@ Some details of the implementation:
 
 class SimpleNet(object):
 
-  def __init__(self, matrix_dims, weight_magnitude=1e-3, reg=0.001, input_size=30):
+  def __init__(self, matrix_dims, weight_magnitude=1e-2, reg=0.01, input_size=30):
     '''
     input_size - dimension of input data
     matrix_dims - dimensions of matrices used in NN, aka layer sizes
@@ -47,7 +47,7 @@ class SimpleNet(object):
       Wi, bi = self.params['W' + str(i)], self.params['b' + str(i)]
       Mi = prev.dot(Wi) + bi
       Mi = np.maximum(Mi, np.zeros(Mi.shape))
-      M[i] = Mi
+      M[i] = Mi.copy()
 
     Wlast, blast = self.params['W' + str(self.num_layers - 1)], self.params['b' + str(self.num_layers - 1)]
     scores = Mi.dot(Wlast) + blast
@@ -81,13 +81,10 @@ class SimpleNet(object):
     grads['b' + str(self.num_layers - 1)] = np.sum(probs, axis=0)
 
     idx = self.num_layers - 2
+    hg = probs
     while idx >= 0:
-      nxt = probs
-      if idx < self.num_layers - 2:
-        nxt = M[idx + 1]
-
       # Relu backward
-      hg = nxt.dot(self.params['W' + str(idx + 1)].T)
+      hg = hg.dot(self.params['W' + str(idx + 1)].T)
       hg[M[idx] <= 0] = 0
 
       # Affine backward

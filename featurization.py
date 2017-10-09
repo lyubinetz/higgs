@@ -6,6 +6,37 @@ from neural_network import *
 This file contains various utilities for creating the best artificial features.
 '''
 
+feature_names = 'DER_mass_MMC,DER_mass_transverse_met_lep,DER_mass_vis,DER_pt_h,DER_deltaeta_jet_jet,DER_mass_jet_jet,DER_prodeta_jet_jet,DER_deltar_tau_lep,DER_pt_tot,DER_sum_pt,DER_pt_ratio_lep_tau,DER_met_phi_centrality,DER_lep_eta_centrality,PRI_tau_pt,PRI_tau_eta,PRI_tau_phi,PRI_lep_pt,PRI_lep_eta,PRI_lep_phi,PRI_met,PRI_met_phi,PRI_met_sumet,PRI_jet_num,PRI_jet_leading_pt,PRI_jet_leading_eta,PRI_jet_leading_phi,PRI_jet_subleading_pt,PRI_jet_subleading_eta,PRI_jet_subleading_phi,PRI_jet_all_pt'.split(',')
+
+def featurize(data):
+  '''
+  Ultimate featurization to use
+  '''
+  rv = featurize_angles(featurize_x2(data))
+  return rv
+
+def featurize_angles(data):
+  '''
+  Adds absolute values of pairwise angle differences to the data.
+  '''
+  rv = data
+  angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
+  for i in angle_features:
+    for j in angle_features:
+      if j <= i:
+        continue
+      rv = np.c_[data, np.abs(data[:, i] - data[:, j])]
+
+  # Drop squares of original angle features
+  for i in reversed(angle_features):
+    rv = np.delete(rv, i + 30, 1)
+
+  # Drop original angle features
+  for i in reversed(angle_features):
+    rv = np.delete(rv, i, 1)
+
+  return rv
+
 def featurize_x2(data):
   '''
   Adds x^2 features to the data.

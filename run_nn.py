@@ -16,16 +16,16 @@ def run(validation, classify_test):
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
   replace_missing_values_with_means(X_train, mean_map)
-  X_train = featurize_x2(X_train)
+  X_train = featurize(X_train)
   X_train = standardize(X_train)
 
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([500, 500], reg=0.001, input_size=X_train.shape[1])
+  nn = SimpleNet([100], reg=0.001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=100, learning_rate=2)
+  nn.fit(X_train, y_train, verbose=True, num_iters=200, learning_rate=2)
 
   # Compute validation score
   if validation:

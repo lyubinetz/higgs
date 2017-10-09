@@ -3,6 +3,7 @@ from helpers import *
 from simple_net import *
 from neural_network import *
 from featurization import *
+from implementations import *
 
 def compare_results(y_pred1, y_pred2, y_correct):
   '''
@@ -32,15 +33,14 @@ if __name__ == '__main__':
   X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
   print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  trs = len(y_train)
-
-  nn1 = SimpleNet([500], reg=0.001, input_size=X_train.shape[1])
-  nn1.fit(X_train[:trs/2], y_train[:trs/2], verbose=True, num_iters=50, learning_rate=2)
+  #nn1 = SimpleNet([500, 500], reg=0.001, input_size=X_train.shape[1])
+  #nn1.fit(X_train, y_train, verbose=True, num_iters=50, learning_rate=2)
+  w1, _ = least_squares(y_train, stack_ones(X_train))
 
   nn2 = SimpleNet([500], reg=0.001, input_size=X_train.shape[1])
-  nn2.fit(X_train[trs/2:], y_train[trs/2:], verbose=True, num_iters=50, learning_rate=2)
+  nn2.fit(X_train, y_train, verbose=True, num_iters=50, learning_rate=2)
 
-  y_pred_val_1 = nn1.predict(X_val)
+  y_pred_val_1 = predict_labels(w1, stack_ones(X_val))
   y_pred_val_2 = nn2.predict(X_val)
 
   compare_results(y_pred_val_1, y_pred_val_2, y_val)

@@ -48,10 +48,10 @@ def create_csv_submission(ids, y_pred, name):
     for r1, r2 in zip(ids, y_pred):
       writer.writerow({'Id':int(r1),'Prediction':int(r2)})
 
-'''
-Makes each column to be Gaussian(0, 1)
-'''
 def standardize(x, mean=None, var=None):
+  '''
+  Makes each column to be Gaussian(0, 1)
+  '''
   if mean is None:
     mean = np.mean(x, axis=0)
 
@@ -64,10 +64,10 @@ def standardize(x, mean=None, var=None):
 
   return std_data
 
-'''
-Computes means for each column, while skipping invalid values.
-'''
 def compute_means_and_vars_for_columns(data):
+  '''
+  Computes means for each column, while skipping invalid values.
+  '''
   mean_map = np.zeros(data.shape[1])
   var_map = np.zeros(data.shape[1])
 
@@ -79,21 +79,63 @@ def compute_means_and_vars_for_columns(data):
 
   return mean_map, var_map
 
-'''
-Replaces -999 in the given data with means computed by compute_means_for_columns()
-Mutates data.
-'''
-def replace_missing_values_with_means(data, mean_map):
+def compute_medians(data):
+  '''
+  Computes medians for each column, while skipping invalid values.
+  '''
+  med_map = np.zeros(data.shape[1])
+
+  for i in range(data.shape[1]):
+    good_positions = np.where(data[:, i] > -999)    
+    col = data[:, i][good_positions]
+    med_map[i] = np.median(col)
+
+  return med_map
+
+def compute_max_plus_1(data):
+  '''
+  Computes maximum+1 for each column, while skipping invalid values.
+  '''
+  max_map = np.zeros(data.shape[1])
+
+  for i in range(data.shape[1]):
+    good_positions = np.where(data[:, i] > -999)    
+    col = data[:, i][good_positions]
+    max_map[i] = np.max(col) + 1
+
+  return max_map
+
+def replace_missing_values(data, val_map):
+  '''
+  Replaces -999 in the given data with provided values. Mutates data.
+  '''
   for i in range(data.shape[1]):
     bad_positions = np.where(data[:, i] <= -999)
-    data[:, i][bad_positions] = mean_map[i]
+    data[:, i][bad_positions] = val_map[i]
 
-'''
-Splits data into two halfs with frac being the fraction of the data to go into the first
-half. Frac must be between 0 and 1. Optionally takes labels as well, and splits them
-identically to data.
-'''
+def split_into_full_and_missing(X, y):
+  bad_idxes = []
+  good_idxes = []
+  # This code is shitty, but I'm too lazy to rewrite it with numpy selectors
+  for i in range(X.shape[0]):
+    bad = False
+    for j in range(X.shape[1]):
+      if X[i][j] <= -999:
+        bad = True
+        break
+    if bad:
+      bad_idxes.append(i)
+    else:
+      good_idxes.append(i)
+
+  return X[good_idxes], y[good_idxes], X[bad_idxes], y[bad_idxes]
+
 def split_data(frac, data, labels):
+  '''
+  Splits data into two halfs with frac being the fraction of the data to go into the first
+  half. Frac must be between 0 and 1. Optionally takes labels as well, and splits them
+  identically to data.
+  '''
   if frac < 0 or frac > 1:
     raise Exception('Illegal frac value in split_data!')
 

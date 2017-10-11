@@ -102,7 +102,7 @@ if __name__ == '__main__':
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
-  replace_missing_values_with_means(X_train, mean_map)
+  replace_missing_values(X_train, mean_map)
   X_train = featurize_x2(X_train)
   X_train = standardize(X_train)
   

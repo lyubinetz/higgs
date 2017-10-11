@@ -15,7 +15,9 @@ def run(validation, classify_test):
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
-  replace_missing_values_with_means(X_train, mean_map)
+  # _, _, X_train, y_train = split_into_full_and_missing(X_train, y_train)
+  replace_missing_values(X_train, mean_map)
+
   X_train = featurize(X_train)
   X_train = standardize(X_train)
 
@@ -23,9 +25,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([1000], reg=0.001, input_size=X_train.shape[1])
+  nn = SimpleNet([300], reg=0.001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=200, learning_rate=0.01, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=50, learning_rate=0.01, update_strategy='rmsprop')
 
   # Compute validation score
   if validation:
@@ -36,7 +38,7 @@ def run(validation, classify_test):
 
   if classify_test:
     # Compute result for submission
-    replace_missing_values_with_means(X_test, mean_map)
+    replace_missing_values(X_test, mean_map)
     X_test = featurize(X_test)
     X_test = standardize(X_test)
     test_predictions = nn.predict(X_test)

@@ -111,13 +111,7 @@ def replace_missing_values(data, val_map):
   '''
   for i in range(data.shape[1]):
     bad_positions = np.where(data[:, i] <= -999)
-    # HACK HACK HACK
-    # After exploration I discovered a very weird effect with value 0
-    # Therefore for now I set it to a special value: -100
-    if i == 0:
-      data[:, i][bad_positions] = -100
-    else:
-      data[:, i][bad_positions] = val_map[i]
+    data[:, i][bad_positions] = val_map[i]
 
 def split_into_full_and_missing(X, y):
   bad_idxes = []

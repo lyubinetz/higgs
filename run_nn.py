@@ -27,9 +27,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([300], reg=0.001, input_size=X_train.shape[1])
+  nn = SimpleNet([500,500,500,500,500], reg=0, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=50, learning_rate=0.01, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=1000, learning_rate=0.02, update_strategy='rmsprop')
 
   # Compute validation score
   if validation:
@@ -83,5 +83,5 @@ def run_cv():
 
 if __name__ == '__main__':
   np.random.seed(777)
-  #run(True, False)
-  run_cv()
+  run(True, False)
+  #run_cv()

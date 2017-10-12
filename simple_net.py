@@ -15,7 +15,7 @@ Some details of the implementation:
 
 class SimpleNet(object):
 
-  def __init__(self, matrix_dims, weight_magnitude=1e-2, reg=0.01, input_size=30):
+  def __init__(self, matrix_dims, weight_magnitude=1e-1, reg=0.01, input_size=30):
     '''
     input_size - dimension of input data
     matrix_dims - dimensions of matrices used in NN, aka layer sizes
@@ -31,7 +31,7 @@ class SimpleNet(object):
     all_md = [input_size] + matrix_dims + [classes]
 
     for i in range(self.num_layers):
-      self.params['W' + str(i)] = weight_magnitude * np.random.randn(all_md[i], all_md[i + 1])
+      self.params['W' + str(i)] = weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i])
       self.params['b' + str(i)] = np.zeros(all_md[i + 1])
 
   def loss(self, X, y=None):

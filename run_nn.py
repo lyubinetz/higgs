@@ -1,7 +1,6 @@
 import numpy as numpy
 from helpers import *
 from simple_net import *
-from neural_network import *
 from featurization import *
 
 '''

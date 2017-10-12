@@ -1,6 +1,5 @@
 import numpy as np
 from helpers import *
-from neural_network import *
 
 '''
 This file contains various utilities for creating the best artificial features.

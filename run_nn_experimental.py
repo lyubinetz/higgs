@@ -19,11 +19,15 @@ def run():
   X_train_good, y_train_good, X_train_bad, y_train_bad = split_into_full_and_missing(X_train, y_train)
   replace_missing_values(X_train_bad, mean_map)
 
+  # Compute featurzied means
+  replace_missing_values(X_combined, mean_map)
+  good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize(X_combined))
+
   X_train_good = featurize(X_train_good)
-  X_train_good = standardize(X_train_good)
+  X_train_good = standardize(X_train_good, mean=good_featurized_means, var=good_featurized_vars)
 
   X_train_bad = featurize(X_train_bad)
-  X_train_bad = standardize(X_train_bad)
+  X_train_bad = standardize(X_train_bad, mean=good_featurized_means, var=good_featurized_vars)
 
   nn1 = SimpleNet([300], reg=0.001, input_size=X_train_good.shape[1])
   #nn1.fit(X_train_good, y_train_good, verbose=True, num_iters=50, learning_rate=0.01, update_strategy='rmsprop')
@@ -31,10 +35,10 @@ def run():
   nn2 = SimpleNet([300], reg=0.001, input_size=X_train_bad.shape[1])
   #nn2.fit(X_train_bad, y_train_bad, verbose=True, num_iters=50, learning_rate=0.01, update_strategy='rmsprop')
 
-  t1 = threading.Thread(target = nn1.fit, args = (X_train_good, y_train_good, 0.01, 20, True, 'rmsprop', 0.9))
+  t1 = threading.Thread(target = nn1.fit, args = (X_train_good, y_train_good, 0.01, 50, True, 'rmsprop', 0.9))
   t1.start()
 
-  t2 = threading.Thread(target = nn2.fit, args = (X_train_bad, y_train_bad, 0.01, 20, True, 'rmsprop', 0.9))
+  t2 = threading.Thread(target = nn2.fit, args = (X_train_bad, y_train_bad, 0.01, 50, True, 'rmsprop', 0.9))
   t2.start()
 
   t1.join()
@@ -46,10 +50,10 @@ def run():
   replace_missing_values(X_test_bad, mean_map)
 
   X_test_good = featurize(X_test_good)
-  X_test_good = standardize(X_test_good)
+  X_test_good = standardize(X_test_good, mean=good_featurized_means, var=good_featurized_vars)
 
   X_test_bad = featurize(X_test_bad)
-  X_test_bad = standardize(X_test_bad)
+  X_test_bad = standardize(X_test_bad, mean=good_featurized_means, var=good_featurized_vars)
 
   test_predictions_1 = nn1.predict(X_test_good)
   test_predictions_2 = nn2.predict(X_test_bad)

@@ -15,11 +15,14 @@ def run(validation, classify_test):
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
 
-  # _, _, X_train, y_train = split_into_full_and_missing(X_train, y_train)
+  # Compute featurzied means
+  replace_missing_values(X_combined, mean_map)
+  good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize(X_combined))
+
   replace_missing_values(X_train, mean_map)
 
   X_train = featurize(X_train)
-  X_train = standardize(X_train)
+  X_train = standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)
 
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
@@ -40,7 +43,7 @@ def run(validation, classify_test):
     # Compute result for submission
     replace_missing_values(X_test, mean_map)
     X_test = featurize(X_test)
-    X_test = standardize(X_test)
+    X_test = standardize(X_test, mean=good_featurized_means, var=good_featurized_vars)
     test_predictions = nn.predict(X_test)
 
     # HACK: Right now predictions are 0,1 , and we need -1,1

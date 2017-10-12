@@ -20,6 +20,7 @@ def featurize_angles(data):
   Adds absolute values of pairwise angle differences to the data.
   '''
   rv = data
+
   angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
   for i in angle_features:
     for j in angle_features:

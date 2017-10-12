@@ -194,3 +194,80 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+
+
+def _build_k_indices(y, k_fold, seed):
+  """build k indices for k-fold."""
+  num_row = y.shape[0]
+  interval = int(num_row / k_fold)
+  np.random.seed(seed)
+  indices = np.random.permutation(num_row)
+  k_indices = [indices[k * interval: (k + 1) * interval]
+               for k in range(k_fold)]
+  return np.array(k_indices)
+
+
+'''
+Given that Vlad chose to mimic the scipy's API with fit() and predict()
+I expect the learner to implement these two methods
+'''
+def _train_and_evaluate(learner, y, X, fold_indices, loss_function, learner_fit_params):
+  '''
+  Computes the error of the learner prediction calculated by the loss_function using data splitted according to the
+  fold indices
+  :param learner: object that implements fit(train_data, labels, params) and predict(train_data)
+  :param y: vector of labels of shape (N,) where y[i] is the label for x[i]
+  :param X: input data of shape (N, C) where x[i, j] is the value for the jth class for the ith input
+  :param fold_indices: 1-D array that indicates the testing data by their indices
+  :param loss_function: function that takes 2 vectors (true_labels, predicted_labels) of shape (N,) as parameters and
+  returns a value representing the error of the predicted_labels
+  :param leaner_fit_param: dictionary with parameters to pass to the fit method of the learner besides the data and
+  labels. Should have the following form {'param_name_i':value, 'param_name_j':value}
+  :return: Loss as computed by the loss_function
+  '''
+  k_fold_mask = np.array([True] * y.shape[0])
+  k_fold_mask[fold_indices] = False
+  X_train = X[k_fold_mask]
+  y_train = y[k_fold_mask]
+  X_test = X[np.logical_not(k_fold_mask)]
+  y_test = y[np.logical_not(k_fold_mask)]
+  learner.fit(X_train, y_train, **learner_fit_params)
+  y_pred_train = learner.predict(X_train)
+  y_pred_test = learner.predict(X_test)
+  loss_tr = loss_function(y_train, y_pred_train)
+  loss_te = loss_function(y_test, y_pred_test)
+
+  return loss_tr, loss_te
+
+
+def cross_validate(learner, y, X, k_folds, loss_function, learner_fit_params, seed, verbose=False):
+  '''
+  Computes the mean error of the learner prediction calculated by the loss_function over k_fold evaluations
+  :param learner: object that implements fit() and predict()
+  :param y: vector of labels of shape (N,) where y[i] is the label for x[i]
+  :param X: input data of shape (N, C) where x[i, j] is the value for the jth class for the ith input
+  :param k_fold: integer representing the number of folds
+  :param loss_function: function that takes 2 vectors (true_labels, predicted_labels) of shape (N,) as parameters and
+  returns a value representing the error of the predicted_labels
+  :param leaner_fit_param: dictionary with parameters to pass to the fit method of the learner besides the data and
+  labels. Should have the following form {'param_name_i':value, 'param_name_j':value}
+  :param seed: used for randomly
+  generating the folds
+  :return: the mean error of the learner over k_folds folds evaluations
+  '''
+  k_folds_indices = _build_k_indices(y, k_folds, seed)
+  losses_tr = []
+  losses_te = []
+  for i,k_fold in enumerate(k_folds_indices):
+    if verbose:
+      print('Iteration {} out of {} folds...'.format(i+1, k_folds))
+    loss_tr, loss_te = _train_and_evaluate(learner, y, X, k_fold, loss_function, learner_fit_params)
+    losses_tr.append(loss_tr)
+    losses_te.append(loss_te)
+    if verbose:
+      print('Iteration {} losses: {} train, {} test'.format(i+1, loss_tr, loss_te))
+
+  mean_loss_tr = np.mean(losses_tr)
+  mean_loss_te = np.mean(losses_te)
+
+  return (mean_loss_tr, mean_loss_te)

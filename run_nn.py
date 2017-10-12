@@ -10,7 +10,7 @@ called prediction.csv with test set classification.
 '''
 def run(validation, classify_test):
   X_train, y_train = read_train_data('datasets/train.csv')
-  X_test, X_test_ids = read_test_data('datasets/test.csv')
+  X_test, X_test_ids = read_test_data('datasets/test_sample.csv')
 
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
@@ -52,6 +52,37 @@ def run(validation, classify_test):
 
     create_csv_submission(X_test_ids, test_predictions, 'prediction.csv')
 
+def run_cv():
+  X_train, y_train = read_train_data('datasets/train.csv')
+  X_test, X_test_ids = read_test_data('datasets/test_sample.csv')
+
+  X_combined = np.vstack((X_train, X_test))
+  mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
+
+  # _, _, X_train, y_train = split_into_full_and_missing(X_train, y_train)
+  replace_missing_values(X_train, mean_map)
+
+  X_train = featurize(X_train)
+  X_train = standardize(X_train)
+
+  nn = SimpleNet([300], reg=0.001, input_size=X_train.shape[1])
+
+  k_folds = 3
+  fit_params_dict = {'verbose':True, 'num_iters':50, 'learning_rate':0.01, 'update_strategy':'rmsprop'}
+
+  loss_tr, loss_te = cross_validate(nn,
+                                    y_train,
+                                    X_train,
+                                    k_folds,
+                                    lambda y_test, y_pred : (y_pred == y_test).sum()*100/len(y_pred),
+                                    fit_params_dict,
+                                    777,
+                                    verbose=True)
+
+  print('Mean train error over {} folds is {}'.format(k_folds, loss_tr))
+  print('Mean test error over {} folds is {}'.format(k_folds, loss_te))
+
 if __name__ == '__main__':
   np.random.seed(777)
-  run(True, False)
+  #run(True, False)
+  run_cv()

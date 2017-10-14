@@ -11,12 +11,15 @@ def featurize(data):
   '''
   Ultimate featurization to use
   '''
-  rv = featurize_angles(featurize_inverse(featurize_x2(data)))
+  rv = featurize_angles(featurize_idk(featurize_inverse(featurize_x2(data))))
   return rv
 
 def featurize_inverse(data):
   x = np.abs(data[:,:30]) + 1
   return np.c_[data, 1.0 / x]
+
+def featurize_idk(data):
+  return data
 
 def featurize_angles(data):
   '''

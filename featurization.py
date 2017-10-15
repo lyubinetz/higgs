@@ -11,14 +11,32 @@ def featurize(data):
   '''
   Ultimate featurization to use
   '''
-  rv = featurize_angles(featurize_idk(featurize_inverse(featurize_x2(data))))
+  rv = featurize_angles(featurize_rbf(featurize_inverse(featurize_x2(data))))
   return rv
 
 def featurize_inverse(data):
   x = np.abs(data[:,:30]) + 1
   return np.c_[data, 1.0 / x]
 
-def featurize_idk(data):
+def featurize_rbf(data):
+  '''
+  Adds RBF features - see https://en.wikipedia.org/wiki/Radial_basis_function_kernel
+  We only add them accross the same categories.
+  '''
+  categories = ['mass', 'pt', 'centrality', 'eta']
+  for cat in categories:
+    for i in range(30):
+      if cat not in feature_names[i]:
+        continue
+      for j in range(30):
+        if j <= i:
+          continue
+        if cat not in feature_names[j]:
+          continue
+        new_col = np.power(data[:, i] - data[:, j], 2)
+        new_col = -1.0 * (new_col / np.var(new_col) / 2.0)
+        new_col = np.exp(new_col)
+        data = np.c_[data, new_col]
   return data
 
 def featurize_angles(data):

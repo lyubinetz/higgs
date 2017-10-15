@@ -8,8 +8,11 @@ Runs the clasification pipeline. In the end this should produce a file
 called prediction.csv with test set classification.
 '''
 def run(validation, classify_test):
+  print('Started the run!')
   X_train, y_train = read_train_data('datasets/train.csv')
   X_test, X_test_ids = read_test_data('datasets/test.csv')
+
+  print('Finished loading data!')
 
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
@@ -23,13 +26,16 @@ def run(validation, classify_test):
   X_train = featurize(X_train)
   X_train = standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)
 
+  print('New number of features is ' + str(X_train.shape[1]))
+  print('Finished data ops!')
+
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([600], reg=0, input_size=X_train.shape[1])
+  nn = SimpleNet([800], reg=0, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=600, learning_rate=0.02, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=800, learning_rate=0.02, update_strategy='rmsprop')
 
   # Compute validation score
   if validation:
@@ -83,5 +89,5 @@ def run_cv():
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(False, True)
+  run(True, False)
   #run_cv()

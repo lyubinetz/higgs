@@ -34,7 +34,12 @@ def run(validation, classify_test):
 
   nn = SimpleNet([300], reg=0, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=100, learning_rate=0.02, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=50, learning_rate=0.02, update_strategy='rmsprop')
+
+  y_pred_val = nn.predict(X_train)
+  num_correct = (y_pred_val == y_train).sum()
+  print('Train results ' + str(num_correct) + ' out of ' +
+    str(len(y_pred_val)) + ' are correct (' + str(num_correct * 100.0 / len(y_pred_val)) + '%).')
 
   # Compute validation score
   if validation:

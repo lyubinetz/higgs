@@ -19,12 +19,11 @@ def run(validation, classify_test):
 
   # Compute featurzied means
   replace_missing_values(X_combined, mean_map)
-  good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize(X_combined))
+  good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize_before_standardize(X_combined))
 
   replace_missing_values(X_train, mean_map)
 
-  X_train = featurize(X_train)
-  X_train = standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)
+  X_train = featurize_and_standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)
 
   print('New number of features is ' + str(X_train.shape[1]))
   print('Finished data ops!')
@@ -33,9 +32,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([800], reg=0, input_size=X_train.shape[1])
+  nn = SimpleNet([300], reg=0, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=800, learning_rate=0.02, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=100, learning_rate=0.02, update_strategy='rmsprop')
 
   # Compute validation score
   if validation:
@@ -47,8 +46,7 @@ def run(validation, classify_test):
   if classify_test:
     # Compute result for submission
     replace_missing_values(X_test, mean_map)
-    X_test = featurize(X_test)
-    X_test = standardize(X_test, mean=good_featurized_means, var=good_featurized_vars)
+    X_test = featurize_and_standardize(X_test, mean=good_featurized_means, var=good_featurized_vars)
     test_predictions = nn.predict(X_test)
 
     # HACK: Right now predictions are 0,1 , and we need -1,1
@@ -67,8 +65,7 @@ def run_cv():
   # _, _, X_train, y_train = split_into_full_and_missing(X_train, y_train)
   replace_missing_values(X_train, mean_map)
 
-  X_train = featurize(X_train)
-  X_train = standardize(X_train)
+  X_train = featurize_and_standardize(X_train)
 
   nn = SimpleNet([300], reg=0.001, input_size=X_train.shape[1])
 

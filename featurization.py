@@ -7,11 +7,22 @@ This file contains various utilities for creating the best artificial features.
 
 feature_names = 'DER_mass_MMC,DER_mass_transverse_met_lep,DER_mass_vis,DER_pt_h,DER_deltaeta_jet_jet,DER_mass_jet_jet,DER_prodeta_jet_jet,DER_deltar_tau_lep,DER_pt_tot,DER_sum_pt,DER_pt_ratio_lep_tau,DER_met_phi_centrality,DER_lep_eta_centrality,PRI_tau_pt,PRI_tau_eta,PRI_tau_phi,PRI_lep_pt,PRI_lep_eta,PRI_lep_phi,PRI_met,PRI_met_phi,PRI_met_sumet,PRI_jet_num,PRI_jet_leading_pt,PRI_jet_leading_eta,PRI_jet_leading_phi,PRI_jet_subleading_pt,PRI_jet_subleading_eta,PRI_jet_subleading_phi,PRI_jet_all_pt'.split(',')
 
-def featurize(data):
+def featurize_before_standardize(data):
+  return featurize_angles(featurize_inverse(featurize_x2(data)))
+
+def featurize_and_standardize(data, mean=None, var=None):
   '''
   Ultimate featurization to use
   '''
-  rv = featurize_angles(featurize_rbf(featurize_inverse(featurize_x2(data))))
+  rv = drop_original_angle_feat(
+    featurize_rbf(
+      standardize(
+        featurize_angles(featurize_inverse(featurize_x2(data))),
+        mean=mean,
+        var=var
+      )
+    )
+  )
   return rv
 
 def featurize_inverse(data):
@@ -34,7 +45,7 @@ def featurize_rbf(data):
         if cat not in feature_names[j]:
           continue
         new_col = np.power(data[:, i] - data[:, j], 2)
-        new_col = -1.0 * (new_col / np.var(new_col) / 2.0)
+        new_col = -1.0 * (new_col / 2.0)
         new_col = np.exp(new_col)
         data = np.c_[data, new_col]
   return data
@@ -52,15 +63,22 @@ def featurize_angles(data):
         continue
       rv = np.c_[data, np.abs(data[:, i] - data[:, j])]
 
+  return rv
+
+def drop_original_angle_feat(data):
+  '''
+  Drops angle and angle^2 features - they were checked to be useless
+  '''
+  angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
   # Drop squares of original angle features
   for i in reversed(angle_features):
-    rv = np.delete(rv, i + 30, 1)
+    data = np.delete(data, i + 30, 1)
 
   # Drop original angle features
   for i in reversed(angle_features):
-    rv = np.delete(rv, i, 1)
+    data = np.delete(data, i, 1)
 
-  return rv
+  return data
 
 def featurize_x2(data):
   '''

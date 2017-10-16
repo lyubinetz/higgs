@@ -59,7 +59,7 @@ class SimpleNet(object):
     # Compute softmax loss with L2 regularization
     # Disclosure: My implementation used a loop when I implemented this and I
     # looked up how people do it with crazy arrange() usage
-    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True)
+    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True) # This is done for numerical stability
     Z = np.sum(np.exp(shifted_by_max), axis=1, keepdims=True)
     log_probs = shifted_by_max - np.log(Z)
     probs = np.exp(log_probs)
@@ -82,6 +82,7 @@ class SimpleNet(object):
 
     idx = self.num_layers - 2
     hg = probs
+    # Go backward through layers
     while idx >= 0:
       # Relu backward
       hg = hg.dot(self.params['W' + str(idx + 1)].T)

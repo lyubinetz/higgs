@@ -34,7 +34,7 @@ def featurize_rbf(data):
   Adds RBF features - see https://en.wikipedia.org/wiki/Radial_basis_function_kernel
   We only add them accross the same categories.
   '''
-  categories = ['mass', 'pt', 'centrality', 'eta']
+  categories = ['mass', 'centrality', 'eta'] # 'pt',
   for cat in categories:
     for i in range(30):
       if cat not in feature_names[i]:

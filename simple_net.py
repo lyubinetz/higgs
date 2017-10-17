@@ -15,7 +15,7 @@ Some details of the implementation:
 
 class SimpleNet(object):
 
-  def __init__(self, matrix_dims, weight_magnitude=1e-2, reg=0.01, input_size=30):
+  def __init__(self, matrix_dims, weight_magnitude=1e-1, reg=0.01, input_size=30):
     '''
     input_size - dimension of input data
     matrix_dims - dimensions of matrices used in NN, aka layer sizes
@@ -31,7 +31,7 @@ class SimpleNet(object):
     all_md = [input_size] + matrix_dims + [classes]
 
     for i in range(self.num_layers):
-      self.params['W' + str(i)] = weight_magnitude * np.random.randn(all_md[i], all_md[i + 1])
+      self.params['W' + str(i)] = weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i])
       self.params['b' + str(i)] = np.zeros(all_md[i + 1])
 
   def loss(self, X, y=None):
@@ -59,7 +59,7 @@ class SimpleNet(object):
     # Compute softmax loss with L2 regularization
     # Disclosure: My implementation used a loop when I implemented this and I
     # looked up how people do it with crazy arrange() usage
-    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True)
+    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True) # This is done for numerical stability
     Z = np.sum(np.exp(shifted_by_max), axis=1, keepdims=True)
     log_probs = shifted_by_max - np.log(Z)
     probs = np.exp(log_probs)
@@ -82,6 +82,7 @@ class SimpleNet(object):
 
     idx = self.num_layers - 2
     hg = probs
+    # Go backward through layers
     while idx >= 0:
       # Relu backward
       hg = hg.dot(self.params['W' + str(idx + 1)].T)
@@ -99,19 +100,26 @@ class SimpleNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, decrease_lr_on_mistake=True):
+  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9):
+    '''
+    Trains the neural network on dataset (X, y).
+    - update_strategy is one of ('fixed', 'decrease_on_mistake', 'rmsprop')
+    '''
     if verbose:
       print('Started fitting the neural network!')
 
     # Run gradient descent to optimize W
     loss_history = []
     ploss = 10000.0 # previous loss
+    eps = 0.0000000001
+    rmsprop_cache = {}
+
     for it in range(num_iters):
       # Evaluate loss and gradient
       loss, grad = self.loss(X, y=y)
       loss_history.append(loss)
 
-      if decrease_lr_on_mistake and loss > ploss:
+      if loss > ploss: # update_strategy == 'decrease_on_mistake' and 
         # Decrease LR so that we take smaller steps
         learning_rate *= 0.8
         if verbose:
@@ -120,10 +128,20 @@ class SimpleNet(object):
       ploss = loss
 
       # Update gradients
-      for p, w in self.params.items():
-        dw = grad[p]
-        next_w = w - learning_rate * dw
-        self.params[p] = next_w
+      if update_strategy in ['fixed', 'decrease_on_mistake']:
+        for p, w in self.params.items():
+          dw = grad[p]
+          next_w = w - learning_rate * dw
+          self.params[p] = next_w
+      elif update_strategy == 'rmsprop':
+        for p, w in self.params.items():
+          dw = grad[p]
+          if p not in rmsprop_cache:
+            rmsprop_cache[p] = dw**2
+          else:
+            rmsprop_cache[p] = decay_rate * rmsprop_cache[p] + (1 - decay_rate) * dw**2
+          next_w = w - learning_rate * dw / (np.sqrt(rmsprop_cache[p]) + eps)
+          self.params[p] = next_w
 
       if verbose:
         print('iteration %d / %d: loss %f' % (it, num_iters, loss))

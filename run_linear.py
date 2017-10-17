@@ -13,7 +13,7 @@ def run(validation, classify_test):
   X_combined = np.vstack((X_train, X_test))
   mean_map, var_map = compute_means_and_vars_for_columns(X_train)
 
-  replace_missing_values_with_means(X_train, mean_map)
+  replace_missing_values(X_train, mean_map)
   X_train = standardize(X_train, mean=mean_map, var=var_map)
   
   if validation:
@@ -31,7 +31,7 @@ def run(validation, classify_test):
 
   if classify_test:
     # Compute result for submission
-    replace_missing_values_with_means(X_test, mean_map)
+    replace_missing_values(X_test, mean_map)
     X_test = standardize(X_test, mean=mean_map, var=var_map)
     test_predictions = predict_labels(w, stack_ones(X_test))
 

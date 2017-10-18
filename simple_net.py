@@ -100,10 +100,46 @@ class SimpleNet(object):
 
     return loss, grads
 
-  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9):
+
+  def _get_batch_indices(self, y, batch_size, class_ratio=None):
+    '''
+    Compute mini-batch indices so that we can use them easily to get the mini-batch data
+    :param y: labels vector, needed to compute indices with the given class ratio
+    :param batch_size: number of data entries the mini batch should have
+    :param class_ratio: proportion of data corresponding to class 0 in the resulting mini-batch. If None,
+    same proportion as in input data is kept
+    :return: array of indices of size batch_size corresponding to the mini-batch entries that should be used
+    '''
+    # compute the indices of entries for each class label
+    indices_y0 = np.nonzero(y == 0)[0]
+    indices_y1 = np.nonzero(y == 1)[0]
+
+    # we keep the same class ratio as in the data
+    if class_ratio is None:
+      class_ratio = indices_y1.shape[0] / y.shape[0]
+
+    shuffled_indices_y0 = np.random.permutation(len(indices_y0))
+    shuffled_indices_y1 = np.random.permutation(len(indices_y1))
+
+    class_0_batch_size = int(np.floor(class_ratio * batch_size))
+    class_1_batch_size = int(np.ceil((1-class_ratio)* batch_size))
+
+    if class_1_batch_size > len(indices_y1):
+      class_1_batch_size = len(indices_y1)
+      class_0_batch_size = len(indices_y0)
+
+    mini_batch_indices = np.r_[indices_y0[shuffled_indices_y0[:class_0_batch_size]],
+                         indices_y1[shuffled_indices_y1[:class_1_batch_size]]]
+
+    return mini_batch_indices
+
+
+  def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9,
+          optimization_strategy = 'gd', mini_batch_size=10000, mini_batch_class_ratio=None):
     '''
     Trains the neural network on dataset (X, y).
     - update_strategy is one of ('fixed', 'decrease_on_mistake', 'rmsprop')
+    - optimization_strategy is one of ('gd', 'sgd')
     '''
     if verbose:
       print('Started fitting the neural network!')
@@ -116,12 +152,22 @@ class SimpleNet(object):
 
     for it in range(num_iters):
       # Evaluate loss and gradient
-      loss, grad = self.loss(X, y=y)
+      if optimization_strategy == 'gd':
+        loss, grad = self.loss(X, y=y)
+      elif optimization_strategy == 'sgd':
+        batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
+        loss, grad = self.loss(X[batch_indexes,:], y[batch_indexes])
       loss_history.append(loss)
 
-      if loss > ploss: # update_strategy == 'decrease_on_mistake' and 
-        # Decrease LR so that we take smaller steps
-        learning_rate *= 0.8
+      if loss > ploss: # update_strategy == 'decrease_on_mistake' and
+        if optimization_strategy =='gd'
+          # Decrease LR so that we take smaller steps
+          learning_rate *= 0.8
+        elif optimization_strategy == 'sgd':
+          # When using SGD, increase the batch-size for a more stable loss and gradient and decrease the learning
+          # rate by a lower value
+          mini_batch_size = min(int(mini_batch_size * 1.001), y.shape[0])
+          learning_rate *= 0.999
         if verbose:
           print('We went the wrong way! Decreasing LR!')
           print('New LR is ' + str(learning_rate))

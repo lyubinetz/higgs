@@ -1,22 +1,24 @@
-import pickle
 import os
+import pickle
+import numpy as np
 
-DECISION_TREE_FILE = os.path.join('.', 'tree_serialized.bin')
+DECISION_TREE_FILE = os.path.join('.', 'tree_pruned_serialized_test.bin')
 SERIALIZED_TRAINING_FILE = os.path.join('.', 'datasets', 'serialized_training')
 SERIALIZED_TEST_FILE = os.path.join('.', 'datasets', 'serialized_test')
+
 
 #################### Data structure definition for storing a Decision Tree ##############
 
 class Node:
     def __init__(self, attribute_index=None, split_value=None, subtree_missing=None, subtree_left=None,
-                 subtree_right=None,
-                 leaf_classification=None):
+                 subtree_right=None, leaf_classification=None, target_majority=None):
         self.attribute = attribute_index
         self.split_value = split_value
         self.subtree_missing = subtree_missing
         self.subtree_left = subtree_left
         self.subtree_right = subtree_right
         self.leaf_classification = leaf_classification
+        self.target_majority = target_majority
 
     def classify(self, instance_vector, missing_value=-999):
         if self.leaf_classification is not None:  # If it's a leaf, then output the classification
@@ -33,6 +35,59 @@ class Node:
         # follow the right branch
         return self.subtree_right.classify(instance_vector, missing_value)
 
+    def compute_accuracy(self, X_val, y_val):
+        '''
+        Function that computes the accuracy of the decision tree, tested on X_val and y_val. 
+        :param X_val: the instances to be used for computing accuracy
+        :param y_val: the targets of the instances defined by X_val
+        :return: the accuracy of the decision tree on the set defined by the parameters
+        '''
+
+        num_correct = 0
+        for X, y in zip(X_val, y_val):
+            y_pred_val = self.classify(X)
+            if y_pred_val == y:
+                num_correct += 1
+
+        return 1.0 * num_correct / len(y_val)
+
+    def copy(self):
+        '''
+        Method used for cloning a decision tree
+        :return: a clone of the current decision tree
+        '''
+
+        return Node(attribute_index=self.attribute, split_value=self.split_value, \
+                    subtree_missing=self.subtree_missing, subtree_left=self.subtree_left, \
+                    subtree_right=self.subtree_right, leaf_classification=self.leaf_classification, \
+                    target_majority=self.target_majority)
+
+    def copy_value(self, other_node):
+        '''
+        Function that copies the value of another node into this node
+        :param other_node: the node whose values are to be copied in this one
+        :return: None
+        '''
+        self.attribute = other_node.attribute
+        self.split_value = other_node.split_value
+        self.subtree_missing = other_node.subtree_missing
+        self.subtree_left = other_node.subtree_left
+        self.subtree_right = other_node.subtree_right
+        self.leaf_classification = other_node.leaf_classification
+        self.target_majority = other_node.target_majority
+
+
+    def replace_values(self, attribute_index=None, split_value=None, subtree_missing=None, subtree_left=None,
+                 subtree_right=None, leaf_classification=None, target_majority=None):
+
+        self.attribute = attribute_index
+        self.split_value = split_value
+        self.subtree_missing = subtree_missing
+        self.subtree_left = subtree_left
+        self.subtree_right = subtree_right
+        self.leaf_classification = leaf_classification
+        self.target_majority = target_majority
+
 
 ########################### Methods for C4.5 algorithm ############################
 
@@ -43,6 +98,7 @@ def all_values_same(arr):
     if len(arr) == 0:
         return True
     return np.all(arr == arr[0])
+
 
 def compute_target_majority(y):
     '''
@@ -57,6 +113,7 @@ def compute_target_majority(y):
 
     return 1
 
+
 def split_vector_by_missing_values(pair_vector, missing_value=-999):
     '''
     Method that splits the initial vector into two vectors: one without missing values for the feature
@@ -67,10 +124,10 @@ def split_vector_by_missing_values(pair_vector, missing_value=-999):
     :return: (no_missing_value_array, missing_value_array)
     '''
     try:
-        missing_values_subarray = pair_vector[pair_vector[:,0] == missing_value]
+        missing_values_subarray = pair_vector[pair_vector[:, 0] == missing_value]
     except IndexError as e:
         print(pair_vector)
-    no_missing_values_subarray = pair_vector[pair_vector[:,0] != missing_value]
+    no_missing_values_subarray = pair_vector[pair_vector[:, 0] != missing_value]
     return no_missing_values_subarray, missing_values_subarray
 
 
@@ -82,7 +139,7 @@ def count_target_classes(pair_vec):
     :return: [count_0_targets, count_1_targets]
     '''
 
-    target_0_instances = pair_vec[pair_vec[:,1] == 0]
+    target_0_instances = pair_vec[pair_vec[:, 1] == 0]
 
     return target_0_instances.shape[0], pair_vec.shape[0] - target_0_instances.shape[0]
 
@@ -237,19 +294,67 @@ def construct_split_datasets(X, y, feature_index, split_value, missing_value=-99
     pair_vector = np.hstack((X, np.array([y]).T))
 
     no_missing_value_array = pair_vector[pair_vector[:, feature_index] != missing_value]
-    left_branch = no_missing_value_array[no_missing_value_array[:,feature_index] < split_value]
-    right_branch = no_missing_value_array[no_missing_value_array[:,feature_index] >= split_value]
-    missing_value_array = pair_vector[pair_vector[:,feature_index] == missing_value]
+    left_branch = no_missing_value_array[no_missing_value_array[:, feature_index] < split_value]
+    right_branch = no_missing_value_array[no_missing_value_array[:, feature_index] >= split_value]
+    missing_value_array = pair_vector[pair_vector[:, feature_index] == missing_value]
 
-    return missing_value_array[:,:-1], missing_value_array[:,-1], left_branch[:,:-1], left_branch[:,-1], \
-           right_branch[:,:-1], right_branch[:,-1]
+    return missing_value_array[:, :-1], missing_value_array[:, -1], left_branch[:, :-1], left_branch[:, -1], \
+           right_branch[:, :-1], right_branch[:, -1]
 
 
 ############################ Decision Tree Pruning #################################
 
-def prune_decision_tree(decision_tree):
-    return decision_tree
-    # TODO: Implement pruning function
+def prune_decision_tree(root, current_node, X_prune, y_prune):
+    '''
+    Function that prunes the tree in a bottom-up fashion, after a complete tree was 
+    constructed. In this form, all the splits explain their value and then just 
+    start to cut some branches. The method is called "reduced error pruning": if we 
+    see that the error on pruning set is getting lower when we replace a non-leaf node
+    with a leaf node with the most common value in the subtree. then we make the replacement.
+    
+    :param root: the root of the decision tree
+    :param current_node: the current node trying to prune
+    :param X_prune: the instances of the pruning set
+    :param y_prune: the targets of the instances
+    :return True, if we can continue pruning on upper levels, False if the decision tree did not change
+    '''
+    if current_node is None:
+        # trying to prune a None node, continue pruning
+        return True
+    if current_node.leaf_classification is not None:
+        # it is already a leaf, so move on and continue pruning
+        return True
+
+    missing_continue = prune_decision_tree(root, current_node.subtree_missing, X_prune, y_prune)
+    left_continue = prune_decision_tree(root, current_node.subtree_left, X_prune, y_prune)
+    right_continue = prune_decision_tree(root, current_node.subtree_right, X_prune, y_prune)
+
+    # We first call prune for subtrees, thus assuring it's a bottom-up fashion.
+
+    continue_pruning = missing_continue and left_continue and right_continue
+    # TODO: Try with OR/AND
+    # We continue pruning only if we can continue at least in one subtree
+
+    if not continue_pruning:
+        return False
+
+        # The actual pruning of the current node
+    best_node = current_node.copy()
+    best_accuracy = root.compute_accuracy(X_prune, y_prune)
+
+    node_target_majority = current_node.target_majority
+
+    current_node.replace_values(leaf_classification=node_target_majority)
+    # Replace this node with a leaf one
+    current_accuracy = root.compute_accuracy(X_prune, y_prune)
+    if best_accuracy <= current_accuracy:
+        # If it's equal, still replace by a simpler model, following Occam's Razor and continue pruning
+        print("Replacing a subtree by a leaf.")
+        return True
+
+    # Else, it means that we should stop pruning and return to the initial status
+    current_node.copy_value(best_node)
+    return False
 
 
 def apply_C45(X, y):
@@ -280,18 +385,23 @@ def apply_C45(X, y):
 
         # If one of the branches contains all instances, then return a leaf node, with the most popular
         # target value in the branch
-        if len(missing_y) == len(X) or len(left_y) == len(X) or len(right_y) == len(X) : # all values are in only one branch
+        if len(missing_y) == len(X) or len(left_y) == len(X) or len(right_y) == len(X):  # all values are in only one branch
             return Node(leaf_classification=compute_target_majority(y))
 
         missing_branch = apply_C45_recursive(missing_X, missing_y)
         left_branch = apply_C45_recursive(left_X, left_y)
         right_branch = apply_C45_recursive(right_X, right_y)
+        target_majority = compute_target_majority(y)
 
         return Node(attribute_index=selected_feature, split_value=best_split, subtree_missing=missing_branch,
-                    subtree_left=left_branch, subtree_right=right_branch)
+                    subtree_left=left_branch, subtree_right=right_branch, target_majority=target_majority)
 
+    X_train, y_train, X_prune, y_prune = split_data(0.8, X, y)
+    # Split the data into training set for the C4.5 algorithm and for the test set for pruning
     root = apply_C45_recursive(X, y)
-    return prune_decision_tree(root)
+    print("Finished constructing tree before pruning.")
+    prune_decision_tree(root, root, X_prune, y_prune)
+    return root
 
 
 #############################33 run #####################
@@ -312,22 +422,16 @@ def run(validation, classify_test):
         X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
         print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-    # decision_tree = apply_C45(X_train, y_train)
-    # pickle.dump(decision_tree, open(DECISION_TREE_FILE, 'wb'))
-    decision_tree = pickle.load(open(DECISION_TREE_FILE, 'rb'))
-
+    decision_tree = apply_C45(X_train, y_train)
+    pickle.dump(decision_tree, open(DECISION_TREE_FILE, 'wb'))
+    # decision_tree = pickle.load(open(DECISION_TREE_FILE, 'rb'))
 
     print("Finished constructing decision tree.")
 
     # Compute validation score
     if validation:
-        num_correct = 0
-        for X, y in zip(X_val, y_val):
-            y_pred_val = decision_tree.classify(X)
-            if y_pred_val == y:
-                num_correct += 1
-        print('Validation results ' + str(num_correct) + ' out of ' +
-              str(len(X_val)) + ' are correct (' + str(num_correct * 100.0 / len(y_val)) + '%).')
+        accuracy = decision_tree.compute_accuracy(X_val, y_val)
+        print('Accuracy: ', accuracy, '%.')
 
     if classify_test:
         # Compute result for submission

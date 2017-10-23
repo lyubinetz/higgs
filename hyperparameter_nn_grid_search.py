@@ -48,11 +48,10 @@ def grid_search(LearnerClass,X_train, y_train, X_val, y_val, constructor_params_
         best_correct = num_correct
         best_params = [constructor_dict, fit_dict]
 
-  print('Best result of {} was obtained with params'.format(best_correct/y.shape[0]))
+  print('Best result of {} was obtained with params'.format(best_correct))
   print('Constructor params:', best_params[0])
   print('Fit params:', best_params[1])
-  return best_correct/y.shape[0], best_params
-
+  return best_correct, best_params
 
 if __name__ == '__main__':
   print('Started the run!')
@@ -79,19 +78,17 @@ if __name__ == '__main__':
   print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
   constructor_params_values = {
-    'matrix_dims' : [[300], [300, 300], [300, 300, 300]],
-    'reg' : [0],
+    'matrix_dims' : [[200], [100, 100]],
+    'reg' : [0, 0.0001],
     'input_size' : [X_train.shape[1]]
   }
 
   fit_params_values = {
     'verbose' : [True],
-    'num_iters' :[800, 1200],
-    'learning_rate' : [0.001, 0.01, 0.1],
+    'num_iters' :[100],
+    'learning_rate' : [0.01],
     'update_strategy' : ['rmsprop', 'fixed'],
-    'optimization_strategy' : ['sgd'],
-    'mini_batch_size' : [5000, 10000, 15000],
-    'mini_batch_class_ratio' : [0.5, None]
+    'optimization_strategy' : ['sgd']
   }
   np.random.seed(777)
   grid_search(SimpleNet, X_train, y_train, X_val, y_val, constructor_params_values, fit_params_values)

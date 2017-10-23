@@ -155,18 +155,21 @@ class SimpleNet(object):
       if optimization_strategy == 'gd':
         loss, grad = self.loss(X, y=y)
       elif optimization_strategy == 'sgd':
-        batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
-        loss, grad = self.loss(X[batch_indexes,:], y[batch_indexes])
+        # TODO(Doru) - there seems to be a bug in _get_batch_indices, I temporarily
+        # disabled it
+        #batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
+        batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
+        loss, grad = self.loss(X[batch_indexes], y[batch_indexes])
       loss_history.append(loss)
 
       if loss > ploss: # update_strategy == 'decrease_on_mistake' and
-        if optimization_strategy =='gd'
+        if optimization_strategy =='gd':
           # Decrease LR so that we take smaller steps
           learning_rate *= 0.8
         elif optimization_strategy == 'sgd':
           # When using SGD, increase the batch-size for a more stable loss and gradient and decrease the learning
           # rate by a lower value
-          mini_batch_size = min(int(mini_batch_size * 1.001), y.shape[0])
+          mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
           learning_rate *= 0.999
         if verbose:
           print('We went the wrong way! Decreasing LR!')

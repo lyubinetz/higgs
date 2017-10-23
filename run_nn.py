@@ -32,9 +32,9 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([600], reg=0, input_size=X_train.shape[1])
+  nn = SimpleNet([600, 600], reg=0.0001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=800, learning_rate=0.01, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=3000, learning_rate=0.01, update_strategy='rmsprop', optimization_strategy='sgd')
 
   y_pred_val = nn.predict(X_train)
   num_correct = (y_pred_val == y_train).sum()

@@ -116,23 +116,24 @@ class SimpleNet(object):
 
     # we keep the same class ratio as in the data
     if class_ratio is None:
-      class_ratio = indices_y0.shape[0] / y.shape[0]
+      class_ratio = indices_y0.shape[0] * 1.0 / y.shape[0]
 
     shuffled_indices_y0 = np.random.permutation(len(indices_y0))
     shuffled_indices_y1 = np.random.permutation(len(indices_y1))
 
     class_0_batch_size = int(np.floor(class_ratio * batch_size))
-    class_1_batch_size = int(np.ceil((1-class_ratio)* batch_size))
+    class_1_batch_size = int(np.ceil((1 - class_ratio) * batch_size))
 
     if class_1_batch_size > len(indices_y1):
       class_1_batch_size = len(indices_y1)
+
+    if class_0_batch_size > len(indices_y0):
       class_0_batch_size = len(indices_y0)
 
     mini_batch_indices = np.r_[indices_y0[shuffled_indices_y0[:class_0_batch_size]],
                          indices_y1[shuffled_indices_y1[:class_1_batch_size]]]
 
     return mini_batch_indices
-
 
   def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9,
           optimization_strategy = 'gd', mini_batch_size=10000, mini_batch_class_ratio=None):
@@ -169,9 +170,6 @@ class SimpleNet(object):
           # rate by a lower value
           mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
           learning_rate *= 0.999
-        if verbose:
-          print('We went the wrong way! Decreasing LR!')
-          print('New LR is ' + str(learning_rate))
       ploss = loss
 
       # Update gradients

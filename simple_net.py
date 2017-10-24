@@ -116,7 +116,7 @@ class SimpleNet(object):
 
     # we keep the same class ratio as in the data
     if class_ratio is None:
-      class_ratio = indices_y1.shape[0] / y.shape[0]
+      class_ratio = indices_y0.shape[0] / y.shape[0]
 
     shuffled_indices_y0 = np.random.permutation(len(indices_y0))
     shuffled_indices_y1 = np.random.permutation(len(indices_y1))
@@ -155,10 +155,8 @@ class SimpleNet(object):
       if optimization_strategy == 'gd':
         loss, grad = self.loss(X, y=y)
       elif optimization_strategy == 'sgd':
-        # TODO(Doru) - there seems to be a bug in _get_batch_indices, I temporarily
-        # disabled it
-        #batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
-        batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
+        batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
+        #batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
         loss, grad = self.loss(X[batch_indexes], y[batch_indexes])
       loss_history.append(loss)
 

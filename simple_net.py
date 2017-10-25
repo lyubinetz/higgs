@@ -116,23 +116,24 @@ class SimpleNet(object):
 
     # we keep the same class ratio as in the data
     if class_ratio is None:
-      class_ratio = indices_y1.shape[0] / y.shape[0]
+      class_ratio = indices_y0.shape[0] * 1.0 / y.shape[0]
 
     shuffled_indices_y0 = np.random.permutation(len(indices_y0))
     shuffled_indices_y1 = np.random.permutation(len(indices_y1))
 
     class_0_batch_size = int(np.floor(class_ratio * batch_size))
-    class_1_batch_size = int(np.ceil((1-class_ratio)* batch_size))
+    class_1_batch_size = int(np.ceil((1 - class_ratio) * batch_size))
 
     if class_1_batch_size > len(indices_y1):
       class_1_batch_size = len(indices_y1)
+
+    if class_0_batch_size > len(indices_y0):
       class_0_batch_size = len(indices_y0)
 
     mini_batch_indices = np.r_[indices_y0[shuffled_indices_y0[:class_0_batch_size]],
                          indices_y1[shuffled_indices_y1[:class_1_batch_size]]]
 
     return mini_batch_indices
-
 
   def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9,
           optimization_strategy = 'gd', mini_batch_size=10000, mini_batch_class_ratio=None):
@@ -156,21 +157,19 @@ class SimpleNet(object):
         loss, grad = self.loss(X, y=y)
       elif optimization_strategy == 'sgd':
         batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
-        loss, grad = self.loss(X[batch_indexes,:], y[batch_indexes])
+        #batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
+        loss, grad = self.loss(X[batch_indexes], y[batch_indexes])
       loss_history.append(loss)
 
       if loss > ploss: # update_strategy == 'decrease_on_mistake' and
-        if optimization_strategy =='gd'
+        if optimization_strategy =='gd':
           # Decrease LR so that we take smaller steps
           learning_rate *= 0.8
         elif optimization_strategy == 'sgd':
           # When using SGD, increase the batch-size for a more stable loss and gradient and decrease the learning
           # rate by a lower value
-          mini_batch_size = min(int(mini_batch_size * 1.001), y.shape[0])
+          mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
           learning_rate *= 0.999
-        if verbose:
-          print('We went the wrong way! Decreasing LR!')
-          print('New LR is ' + str(learning_rate))
       ploss = loss
 
       # Update gradients

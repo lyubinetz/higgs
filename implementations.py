@@ -89,7 +89,7 @@ def least_squares(y, tx):
   '''
   w = np.linalg.inv((tx.T.dot(tx))).dot(tx.T).dot(y)
   mse_loss = compute_mse_loss(y, tx, w)
-  return w, mse_loss
+  return (w, mse_loss)
 
 def ridge_regression(y, tx, lambda_):
   '''
@@ -98,7 +98,7 @@ def ridge_regression(y, tx, lambda_):
   xtx = tx.T.dot(tx) # Product of tx and its transpose
   w = np.linalg.inv((xtx + lambda_ * np.identity(xtx.shape[0]))).dot(tx.T).dot(y)
   mse_ridge = compute_mse_loss(y, tx, w) + lambda_ * (w * w).sum()
-  return w, mse_ridge
+  return (w, mse_ridge)
 
 def linear_predict(w, tx):
   return tx.dot(w)
@@ -280,3 +280,4 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     if iteration % 100 == 0:
       print("Iteration {it}, loss: {l}".format(it=iteration, l=loss))
   return w, loss
+

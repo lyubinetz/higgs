@@ -32,9 +32,10 @@ def run(validation, classify_test):
     X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
     print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
-  nn = SimpleNet([600], reg=0, input_size=X_train.shape[1])
+  nn = SimpleNet([200, 200, 200, 200], reg=0.0001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=800, learning_rate=0.01, update_strategy='rmsprop')
+  nn.fit(X_train, y_train, verbose=True, num_iters=4000, learning_rate=0.01, update_strategy='rmsprop',
+         optimization_strategy='sgd',mini_batch_size=1000)
 
   y_pred_val = nn.predict(X_train)
   num_correct = (y_pred_val == y_train).sum()
@@ -72,16 +73,16 @@ def run_cv():
 
   X_train = featurize_and_standardize(X_train)
 
-  nn = SimpleNet([300], reg=0.001, input_size=X_train.shape[1])
-
   k_folds = 3
-  fit_params_dict = {'verbose':True, 'num_iters':50, 'learning_rate':0.01, 'update_strategy':'rmsprop'}
-
-  loss_tr, loss_te = cross_validate(nn,
+  fit_params_dict = {'verbose':True, 'num_iters':4000, 'learning_rate':0.01, 'update_strategy':'rmsprop',
+                     'optimization_strategy':'sgd', 'mini_batch_size':1000}
+  constructor_params_dict = {'matrix_dims':[200,200,200,200], 'reg':0.0001, 'input_size':X_train.shape[1]}
+  loss_tr, loss_te = cross_validate(SimpleNet,
                                     y_train,
                                     X_train,
                                     k_folds,
                                     lambda y_test, y_pred : (y_pred == y_test).sum()*100/len(y_pred),
+                                    constructor_params_dict,
                                     fit_params_dict,
                                     777,
                                     verbose=True)

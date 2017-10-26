@@ -89,13 +89,15 @@ class SimpleNet(object):
     probs[range(X.shape[0]), y] -= 1
     probs /= X.shape[0]
 
+    # First (form the back) matrix is special, because it wasn't succeeded by ReLU. Thus we
+    # only do the backward pass for affine layer.
     grads['W' + str(self.num_layers - 1)] = M[self.num_layers - 2].T.dot(probs) + \
       2 * self.reg * self.params['W' + str(self.num_layers - 1)]
     grads['b' + str(self.num_layers - 1)] = np.sum(probs, axis=0)
 
     idx = self.num_layers - 2
     hg = probs
-    # Go backward through layers
+    # Go backward through layers - undo Relu and then affine.
     while idx >= 0:
       # Relu backward
       hg = hg.dot(self.params['W' + str(idx + 1)].T)

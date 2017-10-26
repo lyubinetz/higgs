@@ -57,11 +57,17 @@ def featurize_angles(data):
   rv = data
 
   angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
+
+  # Add pairwise modulo differences
   for i in angle_features:
     for j in angle_features:
       if j <= i:
         continue
-      rv = np.c_[data, np.abs(data[:, i] - data[:, j])]
+      rv = np.c_[rv, np.abs(data[:, i] - data[:, j])]
+
+  # Add cosines
+  for i in angle_features:
+    rv = np.c_[rv, np.cos(data[:, i])]
 
   return rv
 

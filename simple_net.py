@@ -1,15 +1,18 @@
 import numpy as np
+from helpers import _get_batch_indices
 
 '''
 This file contains functions for the neural network implementation.
-It is based on cs231n implementation that Volodymyr wrote.
+It is loosely based on cs231n implementation that Volodymyr wrote - in the
+course they used a much nicer structure with separate functions for various
+layers, but I just stuck my forard and backward passes into the
+loss() function. The implementation is made to be as compact as possible.
 
 Some details of the implementation:
 
-- Optimization is a simple GD, but the nice part is a decaying learning rate. Whenever
-  we encounter that the loss is worse than before, we probably went the wrong way, and
-  LR is multiplied by <1 factor. This seems to do really well in practice.
-- We only use a ReLU activation function.
+- Optimization can be a GD or SGD. We use RMSprop update strategy, which we found
+  to be very effective.
+- We only use a ReLU activation function - it's the easiest to implement.
 - I adapted the API to mimic scipy's with fit() and predict().
 '''
 
@@ -17,10 +20,10 @@ class SimpleNet(object):
 
   def __init__(self, matrix_dims, weight_magnitude=1e-1, reg=0.01, input_size=30):
     '''
-    input_size - dimension of input data
+    input_size - dimension of input data (can be different depending on featurization)
     matrix_dims - dimensions of matrices used in NN, aka layer sizes
     weight_magnitude - we initialize matrice with Gaussian(0, 1) multiplied by this magnitude
-    reg - regularization strength
+    reg - regularization strength (aka factor we multiply L2 reg with)
     '''
     # In this task we only deal with 2 classes
     classes = 2
@@ -30,16 +33,24 @@ class SimpleNet(object):
     self.num_layers = len(matrix_dims) + 1
     all_md = [input_size] + matrix_dims + [classes]
 
+    # W is the weight term, b is a constant term, 1 step transormation is f(WX+b), where f
+    # is activation function (ReLU in our case)
     for i in range(self.num_layers):
-      self.params['W' + str(i)] = weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i])
+      # Note that we divide the resulting weights by np.sqrt(all_md[i]) - see
+      # http://cs231n.github.io/neural-networks-2/#init - otherwise we found that
+      # we cannot train the network for particular sizes. Typically this gets handled
+      # well by batch normalization, but since it is nontrivial to implement (the
+      # backward pass is hard), this 1 liner is good enough for us :)
+      self.params['W' + str(i)] = \
+        weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i])
       self.params['b' + str(i)] = np.zeros(all_md[i + 1])
 
   def loss(self, X, y=None):
     '''
-    Compute loss and gradients.
+    Compute loss and gradients - does both forward and backward pass.
     '''
     # Compute the forward pass
-    M = {} # Results of applying affine layer + ReLU
+    M = {} # Results of applying FC layer + ReLU
     for i in range(self.num_layers - 1):
       prev = X
       if i > 0:
@@ -49,35 +60,37 @@ class SimpleNet(object):
       Mi = np.maximum(Mi, np.zeros(Mi.shape))
       M[i] = Mi.copy()
 
-    Wlast, blast = self.params['W' + str(self.num_layers - 1)], self.params['b' + str(self.num_layers - 1)]
+    Wlast, blast = self.params['W' + str(self.num_layers - 1)], \
+      self.params['b' + str(self.num_layers - 1)]
     scores = Mi.dot(Wlast) + blast
-    
+
     # If we just need the predictions
     if y is None:
       return scores
 
-    # Compute softmax loss with L2 regularization
+    # Compute softmax loss with L2 regularization. We tried hinge loss too,
+    # results were comparable.
     # Disclosure: My implementation used a loop when I implemented this and I
-    # looked up how people do it with crazy arrange() usage
-    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True) # This is done for numerical stability
-    Z = np.sum(np.exp(shifted_by_max), axis=1, keepdims=True)
-    log_probs = shifted_by_max - np.log(Z)
+    # looked up how people do it with crazy arrange() usage.
+    shifted_by_max = scores - np.max(scores, axis=1, keepdims=True) # This is done for numerical stability, otherwise u might get huge exponents
+    z = np.sum(np.exp(shifted_by_max), axis=1, keepdims=True)
+    log_probs = shifted_by_max - np.log(z)
     probs = np.exp(log_probs)
     loss = -np.sum(log_probs[np.arange(scores.shape[0]), y]) / scores.shape[0]
 
     # Add regularization
     for i in range(self.num_layers):
-      Wi = self.params['W' + str(i)]
-      loss += self.reg * (Wi * Wi).sum()
+      loss += self.reg * (self.params['W' + str(i)] * self.params['W' + str(i)]).sum()
 
     # Backward pass: compute gradients, storing them in the grads dictionary
     grads = {}
 
-    # probs is sort of the gradient
+    # probs is sort of the gradient from the last layer - then we go back and update the weight matrices.
     probs[range(X.shape[0]), y] -= 1
     probs /= X.shape[0]
 
-    grads['W' + str(self.num_layers - 1)] = M[self.num_layers - 2].T.dot(probs) + 2 * self.reg * self.params['W' + str(self.num_layers - 1)]
+    grads['W' + str(self.num_layers - 1)] = M[self.num_layers - 2].T.dot(probs) + \
+      2 * self.reg * self.params['W' + str(self.num_layers - 1)]
     grads['b' + str(self.num_layers - 1)] = np.sum(probs, axis=0)
 
     idx = self.num_layers - 2
@@ -100,46 +113,11 @@ class SimpleNet(object):
 
     return loss, grads
 
-
-  def _get_batch_indices(self, y, batch_size, class_ratio=None):
-    '''
-    Compute mini-batch indices so that we can use them easily to get the mini-batch data
-    :param y: labels vector, needed to compute indices with the given class ratio
-    :param batch_size: number of data entries the mini batch should have
-    :param class_ratio: proportion of data corresponding to class 0 in the resulting mini-batch. If None,
-    same proportion as in input data is kept
-    :return: array of indices of size batch_size corresponding to the mini-batch entries that should be used
-    '''
-    # compute the indices of entries for each class label
-    indices_y0 = np.nonzero(y == 0)[0]
-    indices_y1 = np.nonzero(y == 1)[0]
-
-    # we keep the same class ratio as in the data
-    if class_ratio is None:
-      class_ratio = indices_y0.shape[0] * 1.0 / y.shape[0]
-
-    shuffled_indices_y0 = np.random.permutation(len(indices_y0))
-    shuffled_indices_y1 = np.random.permutation(len(indices_y1))
-
-    class_0_batch_size = int(np.floor(class_ratio * batch_size))
-    class_1_batch_size = int(np.ceil((1 - class_ratio) * batch_size))
-
-    if class_1_batch_size > len(indices_y1):
-      class_1_batch_size = len(indices_y1)
-
-    if class_0_batch_size > len(indices_y0):
-      class_0_batch_size = len(indices_y0)
-
-    mini_batch_indices = np.r_[indices_y0[shuffled_indices_y0[:class_0_batch_size]],
-                         indices_y1[shuffled_indices_y1[:class_1_batch_size]]]
-
-    return mini_batch_indices
-
   def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9,
           optimization_strategy = 'gd', mini_batch_size=10000, mini_batch_class_ratio=None):
     '''
     Trains the neural network on dataset (X, y).
-    - update_strategy is one of ('fixed', 'decrease_on_mistake', 'rmsprop')
+    - update_strategy is one of ('fixed', 'rmsprop')
     - optimization_strategy is one of ('gd', 'sgd')
     '''
     if verbose:
@@ -156,24 +134,24 @@ class SimpleNet(object):
       if optimization_strategy == 'gd':
         loss, grad = self.loss(X, y=y)
       elif optimization_strategy == 'sgd':
-        batch_indexes = self._get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
+        batch_indexes = _get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
         #batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
         loss, grad = self.loss(X[batch_indexes], y[batch_indexes])
       loss_history.append(loss)
 
-      if loss > ploss: # update_strategy == 'decrease_on_mistake' and
-        if optimization_strategy =='gd':
-          # Decrease LR so that we take smaller steps
-          learning_rate *= 0.8
-        elif optimization_strategy == 'sgd':
-          # When using SGD, increase the batch-size for a more stable loss and gradient and decrease the learning
-          # rate by a lower value
-          mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
-          learning_rate *= 0.999
-      ploss = loss
+      if loss > ploss and optimization_strategy == 'gd':
+          # Decrease LR so that we take smaller steps. We only do it when we cannot decrease the
+          # loss with current LR.
+          learning_rate *= 0.9
+      if optimization_strategy == 'sgd':
+        # When using SGD, increase the batch-size for a more stable loss and gradient and
+        # decrease the learning rate using exponential decay
+        #mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
+        learning_rate *= 0.9999
+      ploss = loss # Set the previous loss
 
       # Update gradients
-      if update_strategy in ['fixed', 'decrease_on_mistake']:
+      if update_strategy == 'fixed':
         for p, w in self.params.items():
           dw = grad[p]
           next_w = w - learning_rate * dw

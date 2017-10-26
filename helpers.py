@@ -265,3 +265,37 @@ def cross_validate(learner, y, X, k_folds, loss_function, learner_fit_params, se
   mean_loss_te = np.mean(losses_te)
 
   return (mean_loss_tr, mean_loss_te)
+
+def _get_batch_indices(y, batch_size, class_ratio=None):
+  '''
+  Compute mini-batch indices so that we can use them easily to get the mini-batch data
+  :param y: labels vector, needed to compute indices with the given class ratio
+  :param batch_size: number of data entries the mini batch should have
+  :param class_ratio: proportion of data corresponding to class 0 in the resulting mini-batch. If None,
+  same proportion as in input data is kept
+  :return: array of indices of size batch_size corresponding to the mini-batch entries that should be used
+  '''
+  # compute the indices of entries for each class label
+  indices_y0 = np.nonzero(y == 0)[0]
+  indices_y1 = np.nonzero(y == 1)[0]
+
+  # we keep the same class ratio as in the data
+  if class_ratio is None:
+    class_ratio = indices_y0.shape[0] * 1.0 / y.shape[0]
+
+  shuffled_indices_y0 = np.random.permutation(len(indices_y0))
+  shuffled_indices_y1 = np.random.permutation(len(indices_y1))
+
+  class_0_batch_size = int(np.floor(class_ratio * batch_size))
+  class_1_batch_size = int(np.ceil((1 - class_ratio) * batch_size))
+
+  if class_1_batch_size > len(indices_y1):
+    class_1_batch_size = len(indices_y1)
+
+  if class_0_batch_size > len(indices_y0):
+    class_0_batch_size = len(indices_y0)
+
+  mini_batch_indices = np.r_[indices_y0[shuffled_indices_y0[:class_0_batch_size]],
+                       indices_y1[shuffled_indices_y1[:class_1_batch_size]]]
+
+  return mini_batch_indices

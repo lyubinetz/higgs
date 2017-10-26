@@ -158,9 +158,13 @@ def predict_labels(weights, data):
   '''
   Generates class predictions given weights, and a test data matrix
   '''
+
   y_pred = np.dot(data, weights)
+  y_pred = y_pred.reshape((y_pred.shape[0]))
   y_pred[np.where(y_pred <= 0.5)] = 0 # Note that this differs from what was given in github - we use 0
   y_pred[np.where(y_pred > 0.5)] = 1
+
+
 
   return y_pred
 
@@ -234,7 +238,8 @@ def _train_and_evaluate(learner, y, X, fold_indices, loss_function, learner_fit_
   return loss_tr, loss_te
 
 
-def cross_validate(learner, y, X, k_folds, loss_function, learner_fit_params, seed, verbose=False):
+def cross_validate(LearnerClass, y, X, k_folds, loss_function, learner_constructor_params, learner_fit_params, seed,
+                                                                                verbose=False):
   '''
   Computes the mean error of the learner prediction calculated by the loss_function over k_fold evaluations
   :param learner: object that implements fit() and predict()
@@ -255,11 +260,13 @@ def cross_validate(learner, y, X, k_folds, loss_function, learner_fit_params, se
   for i,k_fold in enumerate(k_folds_indices):
     if verbose:
       print('Iteration {} out of {} folds...'.format(i+1, k_folds))
+    learner = LearnerClass(**learner_constructor_params)
     loss_tr, loss_te = _train_and_evaluate(learner, y, X, k_fold, loss_function, learner_fit_params)
     losses_tr.append(loss_tr)
     losses_te.append(loss_te)
     if verbose:
       print('Iteration {} losses: {} train, {} test'.format(i+1, loss_tr, loss_te))
+    del learner
 
   mean_loss_tr = np.mean(losses_tr)
   mean_loss_te = np.mean(losses_te)

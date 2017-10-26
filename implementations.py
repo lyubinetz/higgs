@@ -16,7 +16,7 @@ def compute_mean_squared_gradient(y, tx, w):
       w = numpy column vector, weights of the model
 
   Return:
-      Gradient value copmuted as -1/len(y) * dot(tx.T, e) where e = y - dot(tx, w)
+      Gradient value computed as -1/len(y) * dot(tx.T, e) where e = y - dot(tx, w)
 
   Obs:
       <x,y> = inner product of vectors x and y
@@ -102,3 +102,182 @@ def ridge_regression(y, tx, lambda_):
 
 def linear_predict(w, tx):
   return tx.dot(w)
+
+##################### Logistic regression ##############################
+
+def sigmoid_element(x):
+  '''
+  Function that applies the sigmoid function to a number, taking into consideration
+  the fact that the exponential grows very fast. Therefore, if x < 0, then 
+  the expression of the function will be \frac{e^x}{e^x+1}, making sure that the 
+  numerator is upper bounded by 1 and denominator by 2. Also, if x > 0,
+  then we express the sigmoid function as \frac{1}{1+e^{-x}}, the numerator being 1, 
+  and the denominator is upper bounded by 2. Note that both expressions used are 
+  equivalent.
+  :param x: the element on which we want to apply the sigmoid function
+  :return: \sigma(x)
+  '''
+  if x <= 0:
+    return np.exp(x) / (np.exp(x) + 1)
+  return 1 / (1 + np.exp(-x))
+
+
+def sigmoid(t):
+  '''
+  Sigmoid function, that can be applied to a number as well as a numpy array.
+  :param t: a number or a numpy array.
+  :return: the sigmoid function applied to the parameter t. If t is a vector, then it is 
+  applied element-wise
+  '''
+  vectorized_sigmoid = np.vectorize(sigmoid_element)
+  return vectorized_sigmoid(t)
+
+
+def calculate_logistic_regression_loss(y, tx, w):
+  '''
+  Function that computes the loss for logistic regression, as described in the course.
+
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :return: the loss of the current model, as a number
+  '''
+
+  return np.sum(np.log(1 + np.exp(np.dot(tx, w))) - y * tx.dot(w))
+
+def calculate_logistic_regression_gradient(y, tx, w):
+  '''
+  Function that calculates the gradient of the logistic regression loss, as presented 
+  in course.
+  
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :return: gradient of the logistic regression loss, numpy column vector
+  '''
+  return tx.T @ (sigmoid(np.dot(tx, w)) - y)
+
+def logistic_regression_learning_by_gradient_descent(y, tx, w, gamma):
+  '''
+  Function that performs one step of the Gradient Descent in the Logistic Regression 
+  case. 
+  
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :param gamma: the learning step
+  :return: (loss, w), where the first position represents the loss of the current model 
+  defined by w, and the second position represents the vector w defining the new model
+  '''
+  loss = calculate_logistic_regression_loss(y, tx, w)
+  gradient = calculate_logistic_regression_gradient(y, tx, w)
+  w -= gamma * gradient
+  return loss, w
+
+def logistic_regression(y, tx, initial_w, max_iters, gamma):
+  '''
+  Function that implements Logistic Regression using Gradient Descent method.
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param initial_w: numpy column vector, weights of the model
+  :param max_iters: number of steps for the stochastic gradient descent method. Must be >0 to return meaningful loss
+  :param gamma: the learning step
+  :return: (w, loss), where the first position represents the vector w defining the trained
+   model, and the second position represents the loss of the resulted model.
+  '''
+
+  assert max_iters > 0
+
+  y = y.reshape(y.shape[0], 1) # Making sure y is a 2D column array
+  w = initial_w
+  for iteration in range(max_iters):
+    # performing one step of the algorithm
+    loss, w = logistic_regression_learning_by_gradient_descent(y, tx, w, gamma)
+    if iteration % 100 == 0:
+      print("Iteration {it}, loss: {l}".format(it=iteration, l=loss))
+  return w, loss
+
+#### Regularized logistic regression
+
+def compute_L2_regularizer(lambda_, w):
+  '''
+  Function that computes the value lambda_/2 * ||w||^2.
+  :param lambda_: the regularization parameter
+  :param w: the current weights vector
+  :return: the value of the regularizer
+  '''
+  return 1.0 * lambda_ / 2 * np.sum(w ** 2)
+
+
+def calculate_reg_logistic_regression_loss(y, tx, w, lambda_):
+  '''
+  Function that computes the loss for regularized logistic regression, as described in the course.
+
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :param lambda_: the regularization parameter
+  :return: the loss of the current model, as a number
+  '''
+  return calculate_logistic_regression_loss(y, tx, w) + compute_L2_regularizer(lambda_, w)
+
+
+def calculate_reg_logistic_regression_gradient(y, tx, w, lambda_):
+  '''
+  Function that calculates the gradient of the regularized logistic regression loss, 
+  as presented in course.
+
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :param lambda_: the regularization parameter
+  :return: gradient of the logistic regression loss, numpy column vector
+  '''
+
+  # gradient of ||w||_2^2 w.r.t. w is 2w, so we can only add the gradient of the regularizer
+  return calculate_logistic_regression_gradient(y, tx, w) + lambda_ * w
+
+
+def reg_logistic_regression_learning_by_gradient_descent(y, tx, w, gamma, lambda_):
+  '''
+  Function that performs one step of the Gradient Descent in the Regularized Logistic 
+  Regression case. 
+
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param w: numpy column vector, weights of the model
+  :param gamma: the learning step
+  :param lambda_: the regularization parameter
+  :return: (loss, w), where the first position represents the loss of the current model 
+  defined by w, and the second position represents the vector w defining the new model
+  '''
+  loss = calculate_reg_logistic_regression_loss(y, tx, w, lambda_)
+  gradient = calculate_reg_logistic_regression_gradient(y, tx, w, lambda_)
+  w -= gamma * gradient
+  return loss, w
+
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+  '''
+  Function that implements Logistic Regression using Gradient Descent method.
+  :param y: labels, numpy column vector
+  :param tx: numpy multidimensional array, data in matrix form (with first column = 1 for bias), one data entry per row
+  :param initial_w: numpy column vector, weights of the model
+  :param max_iters: number of steps for the stochastic gradient descent method. Must be >0 to return meaningful loss
+  :param gamma: the learning step
+  :return: (w, loss), where the first position represents the vector w defining the trained
+   model, and the second position represents the loss of the resulted model.
+  '''
+
+  assert max_iters > 0
+
+  y = y.reshape(y.shape[0], 1)  # Making sure y is a 2D column array
+
+  w = initial_w
+  for iteration in range(max_iters):
+    # performing one step of the algorithm
+    loss, w = reg_logistic_regression_learning_by_gradient_descent(y, tx, w, gamma, lambda_)
+    if iteration % 100 == 0:
+      print("Iteration {it}, loss: {l}".format(it=iteration, l=loss))
+  return w, loss
+

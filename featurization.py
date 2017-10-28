@@ -51,13 +51,13 @@ def featurize_rbf(data):
         data = np.c_[data, new_col]
   return data
 
-def featurize_angles(data):
+def featurize_angles(data, fn=feature_names):
   '''
   Adds absolute values of pairwise angle differences to the data.
   '''
   rv = data
 
-  angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
+  angle_features = [i for i in range(len(fn)) if fn[i].endswith('phi')]
 
   # Add pairwise modulo differences
   for i in angle_features:
@@ -172,3 +172,24 @@ if __name__ == '__main__':
   print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
   pairwise_feature_search(X_train, y_train, X_val, y_val, 50)
+
+def basic_featurize_rbf(data, num_cols):
+  '''
+  Adds RBF features - see https://en.wikipedia.org/wiki/Radial_basis_function_kernel
+  '''
+  for i in range(num_cols):
+    for j in range(num_cols):
+      if j <= i:
+        continue
+      new_col = np.power(data[:, i] - data[:, j], 2)
+      new_col = -1.0 * (new_col / 2.0)
+      new_col = np.exp(new_col)
+      data = np.c_[data, new_col]
+  return data
+
+def basic_featurize(data):
+  '''
+  This is used for featurizing mini neural-nets that will be used in majority voting.
+  '''
+  num_cols = data.shape[1]
+  return basic_featurize_rbf(featurize_x2(data), num_cols)

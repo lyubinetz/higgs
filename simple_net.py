@@ -149,7 +149,7 @@ class SimpleNet(object):
         # When using SGD, increase the batch-size for a more stable loss and gradient and
         # decrease the learning rate using exponential decay
         #mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
-        learning_rate *= 0.997
+        learning_rate *= lr_decay
       ploss = loss # Set the previous loss
 
       # Update gradients

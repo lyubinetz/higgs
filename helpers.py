@@ -144,6 +144,8 @@ def split_data(frac, data, labels):
   if frac < 0 or frac > 1:
     raise Exception('Illegal frac value in split_data!')
 
+  np.random.seed(666) # Make splits deterministic (hack)
+
   n = data.shape[0]
   indices = np.random.choice(n, int(n * frac), replace=False)
   indices_set = set(indices)

@@ -4,7 +4,7 @@ from simple_net import *
 from featurization import *
 from majority_combinator import *
 
-NUM_NETS = 10
+NUM_NETS = 5
 
 def run_full_pipeline(X_train, X_test, y_train, validation, classify_test):
   '''
@@ -132,7 +132,7 @@ def run(validation, classify_test):
     replace_missing_values(X_test, mean_map)
     X_test = standardize(X_test, mean=mean_map, var=var_map)
 
-    all_test_preds = []
+    all_test_preds = [(good_network_pred, 2 * 0.84)]
     for idx in range(NUM_NETS):
       Xt_idx = basic_featurize(X_test[:,all_indices[idx]])
       nn = all_nets[idx]
@@ -149,4 +149,4 @@ def run(validation, classify_test):
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(True, False)
+  run(False, True)

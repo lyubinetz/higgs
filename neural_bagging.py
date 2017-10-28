@@ -4,7 +4,14 @@ from simple_net import *
 from featurization import *
 from majority_combinator import *
 
-NUM_NETS = 20
+NUM_NETS = 3
+
+def run_full_pipeline(validation, classify_test):
+  '''
+  This method trains a network that gets 0.84+
+  Then we extend it with smaller crap :)
+  '''
+  pass
 
 '''
 Runs the clasification pipeline. In the end this should produce a file
@@ -90,4 +97,4 @@ def run(validation, classify_test):
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(True, False)
+  run(False, True)

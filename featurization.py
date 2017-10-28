@@ -8,20 +8,21 @@ This file contains various utilities for creating the best artificial features.
 feature_names = 'DER_mass_MMC,DER_mass_transverse_met_lep,DER_mass_vis,DER_pt_h,DER_deltaeta_jet_jet,DER_mass_jet_jet,DER_prodeta_jet_jet,DER_deltar_tau_lep,DER_pt_tot,DER_sum_pt,DER_pt_ratio_lep_tau,DER_met_phi_centrality,DER_lep_eta_centrality,PRI_tau_pt,PRI_tau_eta,PRI_tau_phi,PRI_lep_pt,PRI_lep_eta,PRI_lep_phi,PRI_met,PRI_met_phi,PRI_met_sumet,PRI_jet_num,PRI_jet_leading_pt,PRI_jet_leading_eta,PRI_jet_leading_phi,PRI_jet_subleading_pt,PRI_jet_subleading_eta,PRI_jet_subleading_phi,PRI_jet_all_pt'.split(',')
 
 def featurize_before_standardize(data):
-  return featurize_angles(featurize_inverse(featurize_x2(data)))
+  return featurize_angles(featurize_x2(data))
 
 def featurize_and_standardize(data, mean=None, var=None):
   '''
   Ultimate featurization to use
   '''
-  rv = drop_original_angle_feat(
-    featurize_rbf(
+  orig_data = np.copy(data)
+  rv = drop_useless_feat(
+    featurize_rbf(featurize_one_hot(
       standardize(
-        featurize_angles(featurize_inverse(featurize_x2(data))),
+        featurize_angles(featurize_x2(data)),
         mean=mean,
         var=var
-      )
-    )
+      ),
+    orig_data))
   )
   return rv
 
@@ -63,7 +64,7 @@ def featurize_angles(data):
     for j in angle_features:
       if j <= i:
         continue
-      rv = np.c_[rv, np.abs(data[:, i] - data[:, j])]
+      rv = np.c_[rv, np.cos(data[:, i] - data[:, j])]
 
   # Add cosines
   for i in angle_features:
@@ -71,17 +72,19 @@ def featurize_angles(data):
 
   return rv
 
-def drop_original_angle_feat(data):
+def drop_useless_feat(data):
   '''
-  Drops angle and angle^2 features - they were checked to be useless
+  Drops angle and angle^2 features - they were checked to be useless.
+  Also drops index 22 - it is one hot (modeled).
   '''
   angle_features = [i for i in range(len(feature_names)) if feature_names[i].endswith('phi')]
   # Drop squares of original angle features
   for i in reversed(angle_features):
     data = np.delete(data, i + 30, 1)
 
-  # Drop original angle features
-  for i in reversed(angle_features):
+  # Drop original angle features and index 22
+  angle_features.append(22)
+  for i in reversed(sorted(angle_features)):
     data = np.delete(data, i, 1)
 
   return data
@@ -91,6 +94,16 @@ def featurize_x2(data):
   Adds x^2 features to the data.
   '''
   return np.c_[data, np.power(data, 2)]
+
+def featurize_one_hot(data, orig_data):
+  '''
+  Column PRI_jet_num (index 22) is categorical and has 4 different values (0,1,2,3).
+  Generate 4 columns with 0/1 values for it (one hot encoding).
+  '''
+  rv = data
+  for i in range(4):
+    rv = np.c_[rv, np.array(orig_data[:, 22] == i, dtype=float)]
+  return rv
 
 def featurize_x2_and_minus(data):
   '''

@@ -1,6 +1,7 @@
 import numpy as numpy
 from helpers import *
 from implementations import *
+from featurization import *
 
 '''
 Runs the clasification pipeline. In the end this should produce a file
@@ -14,7 +15,7 @@ def run(validation, classify_test):
   mean_map, var_map = compute_means_and_vars_for_columns(X_train)
 
   replace_missing_values(X_train, mean_map)
-  X_train = standardize(X_train, mean=mean_map, var=var_map)
+  X_train = featurize_before_standardize(standardize(X_train, mean=mean_map, var=var_map))
   
   if validation:
     X_train, y_train, X_val, y_val = split_data(0.9, X_train, y_train)
@@ -32,7 +33,7 @@ def run(validation, classify_test):
   if classify_test:
     # Compute result for submission
     replace_missing_values(X_test, mean_map)
-    X_test = standardize(X_test, mean=mean_map, var=var_map)
+    X_test = featurize_before_standardize(standardize(X_test), mean=mean_map, var=var_map)
     test_predictions = predict_labels(w, stack_ones(X_test))
 
     # HACK: Right now predictions are 0,1 , and we need -1,1

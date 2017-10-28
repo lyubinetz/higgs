@@ -6,7 +6,7 @@ from majority_combinator import *
 
 NUM_NETS = 10
 
-def run_full_pipeline(X_train, X_test, validation, classify_test):
+def run_full_pipeline(X_train, X_test, y_train, validation, classify_test):
   '''
   This method trains a network that gets 0.84+
   Then we extend it with smaller crap :)
@@ -70,7 +70,7 @@ def run(validation, classify_test):
   print('Finished loading data!')
 
   print('Running 0.84+ network to get the CORE')
-  good_network_pred = run_full_pipeline(X_train.copy(), X_test.copy(), validation, classify_test)
+  good_network_pred = run_full_pipeline(X_train.copy(), X_test.copy(), y_train.copy(), validation, classify_test)
   print('Finished running 0.84+ network to get the CORE')
 
   X_combined = np.vstack((X_train, X_test))

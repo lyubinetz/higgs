@@ -3,8 +3,9 @@ from helpers import *
 from simple_net import *
 from featurization import *
 from majority_combinator import *
+from utils import compare_results
 
-NUM_NETS = 10
+NUM_NETS = 5
 
 def run_full_pipeline(X_train, X_test, y_train, validation, classify_test):
   '''
@@ -31,7 +32,7 @@ def run_full_pipeline(X_train, X_test, y_train, validation, classify_test):
 
   nn = SimpleNet([600, 600], reg=0.00005, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=8000, learning_rate=0.01, update_strategy='rmsprop',
+  nn.fit(X_train, y_train, verbose=True, num_iters=5000, learning_rate=0.01, update_strategy='rmsprop',
     optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9993)
 
   y_pred_val = nn.predict(X_train)
@@ -91,7 +92,7 @@ def run(validation, classify_test):
   all_nets = []
 
   for idx in range(NUM_NETS):
-    indices = np.random.choice(range(30), 20, replace=False)
+    indices = np.random.choice(range(30), 17, replace=False)
     all_indices.append(indices)
     Xt = basic_featurize(X_train[:, indices])
 
@@ -117,10 +118,13 @@ def run(validation, classify_test):
       print('Validation results (index  ' + str(idx) + ') = ' + str(num_correct) + ' out of ' +
         str(len(y_pred_val)) + ' are correct (' + str(num_correct * 100.0 / len(y_pred_val)) + '%).')
 
+      # Show stats
+      compare_results(y_pred_val, good_network_pred, y_val)
+
   # Compute validation score
   if validation:
     print('GONNA TRY SEVERAL VALUES OF CORE WEIGHT')
-    for core_weight in [0.84, 0.84 * 2, 0.84 * 3, 0.84 * 4, 0.84 * 5]:
+    for core_weight in [0, 0.84, 0.84 * 2, 0.84 * 3, 0.84*4, 0.84*5]:
       print('Core weight is ' + str(core_weight))
       final_pred = majority_combine(all_val_preds + [(good_network_pred, core_weight)])
       num_correct = (final_pred == y_val).sum()

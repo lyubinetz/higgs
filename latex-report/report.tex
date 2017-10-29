@@ -39,9 +39,9 @@ To start with, the provided dataset has a problem with missing values. After bas
 	\item[Column 0] \ \\
 	DER\_mass\_MMC
 \end{description}
-After reading the documentation \textbf{ADD HERE LINK TO BIBLIOGRAPHY}[2], we find that these values are not missing at random, but rather undefined when PRI\_jet\_num <= 1 for the first group of columns, undefined when PRI\_jet\_num = 0 for the second group of columns and undefined when the event is too far from the expected topology for DER\_mass\_MMC. Column 0 (DER\_mass\_MMC) is particularly interesting - if we look at b/s ratio for cases when it is undefined, we see that around 95\% have the 'b' value. Thus, this is a very important signal in itself and we should not just discard it.
+After reading the documentation \textbf{ADD HERE LINK TO BIBLIOGRAPHY}[2], we find that these values are not missing at random, but rather undefined when PRI\_jet\_num <= 1 for the first group of columns, undefined when PRI\_jet\_num = 0 for the second group of columns and undefined when the event is too far from the expected topology for DER\_mass\_MMC. Column 0 (DER\_mass\_MMC) is particularly interesting - if we look at b/s ratio for cases when it is undefined, we see that over 90\% have the 'b' value. Thus, this is a very important signal in itself and we should not just discard it.
   
-We have tried various strategies for what to put in place of missing values - means, medians, maximum column value + epsilon and even some class-based replacement. Out of all these, using means has shown the best performance for neural networks. It is worth mentioning that NNs are less finicky to replacement strategy than other models - for example they correctly recognize that most column 0 entries with missing values should be a 'b' as long as we impute the same value for training and testing datasets.
+We have tried various strategies for what to put in place of missing values - means, medians, max value + $\epsilon$ and even some class-based replacement (all over columns). Out of all these, using means has shown the best performance for neural networks. It is worth mentioning that NNs are less finicky to replacement strategy than other models - for example they correctly recognize that most column 0 entries with missing values should be a 'b' as long as we impute the same value for training and testing datasets.
 
 Lastly, before proceeding to featurization, we have to standardize the data. This is crucial for models like linear regression, where without this low-magnitude columns will just get ignored. This is also important for neural networks, where having data in Gaussian(0, 1) form improves performance too. It's worth mentioning that we compute means and variances for standardization across merged training and test datasets (without missing values) and use the those to standardize both. Otherwise, we could suffer for distribution differences between some columns in train and test, leading to poor results.
 
@@ -49,22 +49,32 @@ Lastly, before proceeding to featurization, we have to standardize the data. Thi
 Throughout the competition we've tried many variants of the new features and chose the ones that have shown to provide the biggest benefits to our submission model. In the beginning, the process of deciding whether a new set of features was good involved doing a simple cross validation, but when result crossed the 0.84 mark, we started using 5-fold cross-validation to battle variance. The final list of used features is the following:
 \begin{description}
 \item[Squares of the original features values] \ \\
-	We do it for linear regression, where adding them shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. We then try adding them to a 1 hidden layer NN and the result goes up from X to Y. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our neural network.
+	Adding them to linear regression shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. We then try adding them to a 1 hidden layer NN and the result goes up from X to Y. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our neural network.
 	
-\item[Cosines of pairwise angle differences] \ \\
+\item[Cosines of angles and pairwise angle differences] \ \\
 	Applying sin(x) or cos(x) only makes sense for angles. We also discovered that doing it for pairwise differences is quite helpful.
 	
 \item[Converting PRI\_jet\_num column using one-hot encoding] \ \\
 	This is the only categorical feature in the dataset with only 4 options.
 	
 \item[Radial Basis Features] \ \\
-	For columns X and Y that are G(0, 1), we add column with $exp(-||X-Y||^2)$. 
+	For columns X and Y that are G(0, 1), we add column with $exp(-||X-Y||^2/2)$. 
 	RBF features are typically used to extend Support Vector Machines. We tried adding them to our neural network, which resulted in a minor improvement.
 \end{description}
 
-As a note to the rather concise feature augmentation pipeline, using a neural network allows us to pus less effort into this process compared to using a linear model. In this reason, neural networks are known to have ability to fit complex data shapes as a result of non-linearity, thus sparing us from searching for features that can allow simple regressions to achieve this behaviour.
+As a note to the rather concise feature augmentation pipeline, using a neural network allows us to pus less effort into this process compared to using a linear model. In this reason, neural networks are known to have ability to fit complex data shapes as a result of non-linearity, thus sparing us from searching for features that can allow simple regressions to achieve this behavior.
 
+\section{Benchmarks}
 
+TODO
+
+\section{Final model}
+
+TODO
+
+\section{Conclusion}
+
+TODO
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}

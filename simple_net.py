@@ -18,7 +18,7 @@ Some details of the implementation:
 
 class SimpleNet(object):
 
-  def __init__(self, matrix_dims, weight_magnitude=1e-1, reg=0.01, input_size=30):
+  def __init__(self, matrix_dims, weight_magnitude=1, reg=0.01, input_size=30):
     '''
     input_size - dimension of input data (can be different depending on featurization)
     matrix_dims - dimensions of matrices used in NN, aka layer sizes
@@ -42,7 +42,7 @@ class SimpleNet(object):
       # well by batch normalization, but since it is nontrivial to implement (the
       # backward pass is hard), this 1 liner is good enough for us :)
       self.params['W' + str(i)] = \
-        weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i])
+        weight_magnitude * np.random.randn(all_md[i], all_md[i + 1]) / np.sqrt(all_md[i] / 2.0)
       self.params['b' + str(i)] = np.zeros(all_md[i + 1])
 
   def loss(self, X, y=None):
@@ -137,7 +137,6 @@ class SimpleNet(object):
         loss, grad = self.loss(X, y=y)
       elif optimization_strategy == 'sgd':
         batch_indexes = _get_batch_indices(y, mini_batch_size, mini_batch_class_ratio)
-        #batch_indexes = np.random.choice(len(y), mini_batch_size, replace=False)
         loss, grad = self.loss(X[batch_indexes], y[batch_indexes])
       loss_history.append(loss)
 
@@ -148,7 +147,6 @@ class SimpleNet(object):
       if optimization_strategy == 'sgd':
         # When using SGD, increase the batch-size for a more stable loss and gradient and
         # decrease the learning rate using exponential decay
-        #mini_batch_size = min(int(mini_batch_size * 1.0005), y.shape[0])
         learning_rate *= lr_decay
       ploss = loss # Set the previous loss
 

@@ -20,7 +20,7 @@ def create_method_params(method_name, shape=30):
     method_params = {
       'lambda_':0.01,
       'initial_w':np.zeros((shape, 1)),
-      'max_iters':1000,
+      'max_iters':500,
       'gamma':0.000001
     }
   else:
@@ -70,7 +70,7 @@ def evaluate(X, y, method_name, log_file_name ="logs.tx", verbose=False):
     BaseMethodWrapper,
     y,
     X,
-    3,
+    5,
     lambda y_pred, y_test: (y_pred == y_test).sum()*100/len(y_pred),
     wrapper_constructor_params,
     {},
@@ -88,11 +88,11 @@ def evaluate(X, y, method_name, log_file_name ="logs.tx", verbose=False):
 
 def compute_featurized_data(X_train, X_combined, featurization_method = None):
   if featurization_method is None:
-    good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(X_combined)
-    X_train = standardize(X_train, good_featurized_means, good_featurized_vars)
+    #good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(X_combined)
+    X_train = standardize(X_train)
   elif featurization_method == 'x^2':
-    good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize_x2(X_combined))
-    X_train = standardize(featurize_x2(X_train), good_featurized_means, good_featurized_vars)
+    #good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize_x2(X_combined))
+    X_train = standardize(featurize_x2(X_train))
   elif featurization_method == 'final':
     good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize_before_standardize(X_combined))
     X_train = featurize_and_standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)

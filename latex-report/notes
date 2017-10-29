@@ -1,0 +1,10 @@
+biace variance decomposition for degree was plotted using regularized logistic regression with 0.01 regularization, initial_w = 0, 200 iters, gamma=0.0000001, full gradient descent for 200 steps
+X_train was with missing values computed as in the NN pipeline (using means and vars from X_combined)
+For computing the variance we used subsampling of 0.005% of data for test and the rest for training over 5 samples with seeds(0,1,2,3,4)
+Degrees were 2,3,4,5,7
+
+bias variance decomposition for lambda in regularized logistic regression with full gradient desccent for 200 steps
+lambdas = [1, 0.01, 0.001,  0.00000001, 0][::-1]
+X_train was featurized with the NN featurization pipline: x^2, inverse, angles, standardize, featurization_rbf, drop_original_angle_feat
+For computing the variance we used subsampling of 0.005% of data for test and the rest for training over 5 samples with seeds(0,1,2,3,4)
+seeds = range(5)

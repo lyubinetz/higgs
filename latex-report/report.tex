@@ -4,6 +4,13 @@
 \usepackage{graphicx}	% For figure environment
 
 
+% For centered values in table
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}} 
+
+\usepackage{diagbox}
+
 \begin{document}
 \title{Getting over 84\% in finding the Higgs boson}
 
@@ -19,9 +26,9 @@ Facing the challenge to detect the appearance or not of a Higgs boson in a colli
 
 \section{Introduction}
 Throughout the month of the competition we've made gradual progress towards reaching a satisfying result. 
-We start with no featurization and basic models as linear regression, ridge regression and logistic regression. These models prove to have a rather small accuracy on a cross-validation evaluation (see table with results - TODO!!). 
-We then turn our heads towards feature augmentation and add a polynomial basis of degree 2 for each feature. As expected, the accuracy increases as presented in table (TODO!!). 
-Then we dive deeper into data analysis and we try to understand the features and how to combine them. This results in the final feature augmentation pipeline presented later in the report. The results can be seen in the table (TODO!!). 
+We start with no featurization and basic models as linear regression, ridge regression and logistic regression. These models prove to have a rather small accuracy on a cross-validation evaluation, Table \ref{table:models_benchmarks}. 
+We then turn our heads towards feature augmentation and add a polynomial basis of degree 2 for each feature. As expected, the accuracy increases as presented in Table \ref{table:models_benchmarks}. 
+Then we dive deeper into data analysis and we try to understand the features and how to combine them. This results in the final feature augmentation pipeline presented later in the report. The results can be seen in the Table \ref{table:models_benchmarks}. 
 
 While the above models are good for certain basic tasks, they are rarely used for more complex datasets such as this one, where the relationship between the inputs and outputs is not trivial. Neural networks have shown to have good performance on complex datasets due to their ability to bend the decision boundaries - something that basic regressions can only achieve with advanced featurization. Since a basic version of a neural network takes slightly more than 100 LoC to implement, it's smarter to use it rather than spend days trying to pick good features.
 
@@ -66,7 +73,23 @@ As a note to the rather concise feature augmentation pipeline, using a neural ne
 
 \section{Benchmarks}
 
-TODO
+In our gradual progress, we hit a few milestones that are defined by different results in the evaluation of our models. We present in Table \ref{table:models_benchmarks} hereunder the accuracies each model used by us achieved. For the linear and ridge regression we used the normal equations to get the minimum weight corresponding to the mean squared loss. For the latter one, we used regularization parameter $\lambda = 0.01$. For logistic regression, we used full gradient descent in order to optimize the maximum likelyhood criterion. Over all the runs, we used a regularization parameter $\lambda = 0.01$, weights initialized to zero, 500 iterations and a learning step $\gamma = 1e^{-6}$
+
+\begin{table}[h]
+	\begin{tabular}{ |M{1.5cm}|M{1.5cm}|M{1.5cm}|M{1.8cm}|  }
+		\hline
+		\diagbox[width=7em, height=3em]{Model}{Feat aug} & No feature augmentation & Polynomial basis degree 2 & Full feature augmentation pipeline \\
+		\hline
+		Linear regression& 67.064\% & 68.380\% & 79.301\% \\
+		\hline
+		Ridge regressions& 67.062\% & 68.382\%  & 79.305\% \\
+		\hline
+		Regularized logistic regression& 74.881\% & 77.369\% & 79.067\%\\
+		\hline
+	\end{tabular}
+	\caption{Results obtained on a 3-fold cross-validation evaluation for the specified models using different approaces for feature augmentation}
+	\label{table:models_benchmarks}
+\end{table}
 
 \section{Final model}
 

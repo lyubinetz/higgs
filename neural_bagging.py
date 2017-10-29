@@ -7,58 +7,6 @@ from utils import compare_results
 
 NUM_NETS = 10
 
-def run_full_pipeline(X_train, X_test, y_train, validation, classify_test):
-  '''
-  This method trains a network that gets 0.84+
-  Then we extend it with smaller crap :)
-  '''
-  X_combined = np.vstack((X_train, X_test))
-  mean_map, var_map = compute_means_and_vars_for_columns(X_combined)
-
-  # Compute featurzied means
-  replace_missing_values(X_combined, mean_map)
-  good_featurized_means, good_featurized_vars = compute_means_and_vars_for_columns(featurize_before_standardize(X_combined))
-
-  replace_missing_values(X_train, mean_map)
-
-  X_train = featurize_and_standardize(X_train, mean=good_featurized_means, var=good_featurized_vars)
-
-  print('New number of features is ' + str(X_train.shape[1]))
-  print('Finished data ops!')
-
-  if validation:
-    X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
-    print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
-
-  nn = SimpleNet([600, 600], reg=0.00005, input_size=X_train.shape[1])
-  # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=8000, learning_rate=0.01, update_strategy='rmsprop',
-    optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9993)
-
-  y_pred_val = nn.predict(X_train)
-  num_correct = (y_pred_val == y_train).sum()
-  print('Train results ' + str(num_correct) + ' out of ' +
-    str(len(y_pred_val)) + ' are correct (' + str(num_correct * 100.0 / len(y_pred_val)) + '%).')
-
-  # Compute validation score
-  if validation:
-    y_pred_val = nn.predict(X_val)
-    num_correct = (y_pred_val == y_val).sum()
-    print('Validation results ' + str(num_correct) + ' out of ' +
-      str(len(y_pred_val)) + ' are correct (' + str(num_correct * 100.0 / len(y_pred_val)) + '%).')
-
-    return y_pred_val
-
-  if classify_test:
-    # Compute result for submission
-    replace_missing_values(X_test, mean_map)
-    X_test = featurize_and_standardize(X_test, mean=good_featurized_means, var=good_featurized_vars)
-    test_predictions = nn.predict(X_test)
-
-    return test_predictions
-
-  assert False, "Well, this is fucked bro"
-
 def run(validation, classify_test):
   '''
   Runs the clasification pipeline. In the end this should produce a file
@@ -96,12 +44,12 @@ def run(validation, classify_test):
 
   for idx in range(NUM_NETS):
     print('Idx is ' + str(idx))
-    indices = np.random.choice(X_train.shape[0], 140000)
+    indices = np.random.choice(X_train.shape[0], 160000)
     Xt = X_train[indices,:]
-    nn1 = SimpleNet([600, 600], reg=0.0002, input_size=Xt.shape[1])
+    nn1 = SimpleNet([600, 600], reg=0.0001, input_size=Xt.shape[1])
     # Train the net
-    nn1.fit(Xt, y_train[indices], verbose=False, num_iters=2500, learning_rate=0.01, update_strategy='rmsprop',
-      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9993)
+    nn1.fit(Xt, y_train[indices], verbose=False, num_iters=8000, learning_rate=0.01, update_strategy='rmsprop',
+      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9995)
 
     all_nets.append(nn1)
 

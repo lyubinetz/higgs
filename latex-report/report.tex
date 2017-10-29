@@ -14,7 +14,7 @@
 \maketitle
 
 \begin{abstract}
-Facing the challenge to detect the appearance or not of a Higgs boson in a collision of protons, we perform an analysis of the provided features and point out useful observation about the values that are present and the ones that are missing, then we propose a featurization pipeline on the result of which we employ different models as baseline evaluation and one model based on a simple neural network implemented from scratch that performs the best.
+Facing the challenge to detect the appearance or not of a Higgs boson in a collision of protons, we perform an analysis of the provided features, then we propose a featurization pipeline on the result of which we employ different models as baseline evaluation and one neural network model that performs the best.
 \end{abstract}
 
 \section{Introduction}
@@ -23,9 +23,9 @@ We start with no featurization and basic models as linear regression, ridge regr
 We then turn our heads towards feature augmentation and add a polynomial basis of degree 2 for each feature. As expected, the accuracy increases as presented in table (TODO!!). 
 Then we dive deeper into data analysis and we try to understand the features and how to combine them. This results in the final feature augmentation pipeline presented later in the report. The results can be seen in the table (TODO!!). 
 
-\textbf{(Insert here argumentation of why we chose the NEURAL NETWORK (Having hit a blocking point related to the feature augmentation, we focus on the model and work on the neural netwrok implementation)).} 
+While the above models are good for certain basic tasks, they are rarely used for more complex datasets such as this one, where the relationship between the inputs and outputs is not trivial. Neural networks have shown to have good performance on complex datasets due to their ability to bend the decision boundaries - something that basic regressions can only achieve with advanced featurization. Since a basic version of a neural network takes slightly more than 100 LoC to implement, it's smarter to use it rather than spend days trying to pick good features.
 
-In most models, in special for neural networks, we have to fight issues like overfitting, underfitting or large training times, that prevents us from effectively using the chosen models. For overfitting we choose to use a regularization parameter and we analyze it's effectiveness later on in the paper. We tackle the large training times by changing the learning method from gradient descent to stochastic gradient descent which proves to be a great improvement.
+For the above models have to fight issues like overfitting, underfitting or large training times, that prevents us from effectively using the chosen models. For overfitting we choose to use a regularization parameter and we analyze it's effectiveness later on in the paper. We tackle the large training times of neural networks by changing the learning method from gradient descent to stochastic gradient descent which proved to be a great improvement.
 
 \section{Data analysis}
 Before employing any model, we proceed to do data imputation and cleaning procedures.
@@ -33,38 +33,33 @@ Before employing any model, we proceed to do data imputation and cleaning proced
 To start with, the provided dataset has a problem with missing values. After basic exploratory analysis, we see that missing values are split into three groups and either the entire group is missing or the entire group is present. These column groups are:
 \begin{description}
 	\item[First group] \ \\
-	DER\_deltaeta\_jet\_jet, DER\_mass\_jet\_jet, DER\_prodeta\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_pt, PRI\_jet\_subleading\_eta, PRI\_jet\_subleading\_phi
+	DER\_[deltaeta,mass,prodeta]\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_[pt,eta,phi],
 	\item[Second group] \ \\
-	PRI\_jet\_leading\_pt, PRI\_jet\_leading\_eta, PRI\_jet\_leading\_phi
+	PRI\_jet\_leading\_[pt,eta,phi],
 	\item[Column 0] \ \\
 	DER\_mass\_MMC
 \end{description}
-  After reading the documentation \textbf{ADD HERE LINK TO BIBLIOGRAPHY}[2], we find that these values are not missing at random, but rather undefined when PRI\_jet\_num <= 1 for the first group of columns, undefined when PRI\_jet\_num = 0 for the second group of columns and undefined when the event is too far from the expected topology for DER\_mass\_MMC. Column 0 (DER\_mass\_MMC) is particularly interesting - if we look at b/s ratio for cases when it is undefined, we see that around 95\% have the 'b' value. Thus, this is a very important signal in itself and we should not just discard it.
+After reading the documentation \textbf{ADD HERE LINK TO BIBLIOGRAPHY}[2], we find that these values are not missing at random, but rather undefined when PRI\_jet\_num <= 1 for the first group of columns, undefined when PRI\_jet\_num = 0 for the second group of columns and undefined when the event is too far from the expected topology for DER\_mass\_MMC. Column 0 (DER\_mass\_MMC) is particularly interesting - if we look at b/s ratio for cases when it is undefined, we see that around 95\% have the 'b' value. Thus, this is a very important signal in itself and we should not just discard it.
   
-  We consider several strategies for dealing with missing values:
-  \begin{itemize}
-  	\item Replacing them with maximum of the column + 1
-  	\item Replacing them with the mean of the column (only defined values)
-  	\item Replacing them with the median of the column (only defined values
-  	\item Variations of class-based imputation
-  \end{itemize}
+We have tried various strategies for what to put in place of missing values - means, medians, maximum column value + epsilon and even some class-based replacement. Out of all these, using means has shown the best performance for neural networks. It is worth mentioning that NNs are less finicky to replacement strategy than other models - for example they correctly recognize that most column 0 entries with missing values should be a 'b' as long as we impute the same value for training and testing datasets.
+
+Lastly, before proceeding to featurization, we have to standardize the data. This is crucial for models like linear regression, where without this low-magnitude columns will just get ignored. This is also important for neural networks, where having data in Gaussian(0, 1) form improves performance too. It's worth mentioning that we compute means and variances for standardization across merged training and test datasets (without missing values) and use the those to standardize both. Otherwise, we could suffer for distribution differences between some columns in train and test, leading to poor results.
 
 \section{Feature augmentation}
 Throughout the competition we've tried many variants of the new features and chose the ones that have shown to provide the biggest benefits to our submission model. In the beginning, the process of deciding whether a new set of features was good involved doing a simple cross validation, but when result crossed the 0.84 mark, we started using 5-fold cross-validation to battle variance. The final list of used features is the following:
 \begin{description}
 \item[Squares of the original features values] \ \\
-	We do it for linear regression, where adding them shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. We then try adding them to a 1 hidden layer NN and the result goes up from X to Y. Neural network never multiples the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our neural network.
+	We do it for linear regression, where adding them shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. We then try adding them to a 1 hidden layer NN and the result goes up from X to Y. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our neural network.
 	
 \item[Cosines of pairwise angle differences] \ \\
 	Applying sin(x) or cos(x) only makes sense for angles. We also discovered that doing it for pairwise differences is quite helpful.
 	
 \item[Converting PRI\_jet\_num column using one-hot encoding] \ \\
-	This is the only categorical feature in the dataset with only 4 options, so it makes sense to do one-hot for it
+	This is the only categorical feature in the dataset with only 4 options.
 	
-\item[RBF features for columns of identical “type”] \ \\
+\item[Radial Basis Features] \ \\
 	For columns X and Y that are G(0, 1), we add column with $exp(-||X-Y||^2)$. 
-	RBF features, being typically used to extend Support Vector Machines with good results, we considered worth trying to add them to our neural network. This resulted in a minor improvement.
-	Identical type meaning both columns represent mass, centrality, etc.
+	RBF features are typically used to extend Support Vector Machines. We tried adding them to our neural network, which resulted in a minor improvement.
 \end{description}
 
 As a note to the rather concise feature augmentation pipeline, using a neural network allows us to pus less effort into this process compared to using a linear model. In this reason, neural networks are known to have ability to fit complex data shapes as a result of non-linearity, thus sparing us from searching for features that can allow simple regressions to achieve this behaviour.

@@ -102,8 +102,8 @@ def compute_featurized_data(X_train, X_combined, featurization_method = None):
 
 if __name__ == '__main__':
   print('Started the run!')
-  X_train, y_train = read_train_data('datasets/train.csv', load_pickle=True)
-  X_test, X_test_ids = read_test_data('datasets/test.csv', load_pickle=True)
+  X_train, y_train = read_train_data('datasets/train.csv')
+  X_test, X_test_ids = read_test_data('datasets/test.csv')
 
   print('Finished loading data!')
 

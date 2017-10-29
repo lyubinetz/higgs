@@ -130,9 +130,9 @@ def bias_var_logistic_reg_pbf_degree(X, y_train, X_c):
 
 if __name__ == "__main__":
   print('Started the run!')
-  X_train, y_train = read_train_data('datasets/train.csv', load_pickle=True)
+  X_train, y_train = read_train_data('datasets/train.csv')
   pbf = False 
-  X_test, X_test_ids = read_test_data('datasets/test.csv', load_pickle=True)
+  X_test, X_test_ids = read_test_data('datasets/test.csv')
 
   print('Finished loading data!')
 

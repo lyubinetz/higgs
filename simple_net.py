@@ -116,7 +116,7 @@ class SimpleNet(object):
     return loss, grads
 
   def fit(self, X, y, learning_rate=0.1, num_iters=1000, verbose=False, update_strategy='rmsprop', decay_rate=0.9,
-          optimization_strategy = 'gd', mini_batch_size=10000, mini_batch_class_ratio=None, lr_decay=0.997):
+          optimization_strategy = 'gd', mini_batch_size=600, mini_batch_class_ratio=None, lr_decay=0.997):
     '''
     Trains the neural network on dataset (X, y).
     - update_strategy is one of ('fixed', 'rmsprop')

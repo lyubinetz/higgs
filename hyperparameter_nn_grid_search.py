@@ -77,18 +77,23 @@ if __name__ == '__main__':
   X_train, y_train, X_val, y_val = split_data(0.8, X_train, y_train)
   print('Train/Val sizes ' + str(len(y_train)) + '/' + str(len(y_val)))
 
+  indices = np.random.choice(X_train.shape[0], 120000)
+  X_train = X_train[indices,:]
+  y_train = y_train[indices]
+
   constructor_params_values = {
-    'matrix_dims' : [[200], [100, 100]],
-    'reg' : [0, 0.0001],
+    'matrix_dims' : [[600, 600]],
+    'reg' : [0.0002, 0.00015],
     'input_size' : [X_train.shape[1]]
   }
 
   fit_params_values = {
     'verbose' : [True],
-    'num_iters' :[100],
+    'num_iters' :[2500],
     'learning_rate' : [0.01],
-    'update_strategy' : ['rmsprop', 'fixed'],
-    'optimization_strategy' : ['sgd']
+    'update_strategy' : ['rmsprop'],
+    'optimization_strategy' : ['sgd'],
+    'lr_decay': [0.9993]
   }
   np.random.seed(777)
   grid_search(SimpleNet, X_train, y_train, X_val, y_val, constructor_params_values, fit_params_values)

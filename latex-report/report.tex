@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-Facing the challenge to detect the appearance or not of a Higgs boson in a collision of protons, we perform an analysis of the provided features, then we propose a featurization pipeline on the result of which we employ different models as baseline evaluation and one neural network model that performs the best.
+Facing the challenge to detect the appearance of a Higgs boson in a collision of protons, we perform an analysis of the provided features, then we propose a featurization pipeline on the result of which we employ different models as baseline evaluation and a bag of neural networks model that performs the best.
 \end{abstract}
 
 \section{Introduction}
@@ -32,7 +32,7 @@ Then we dive deeper into data analysis and we try to understand the features and
 
 While the above models are good for certain basic tasks, they are rarely used for more complex datasets such as this one, where the relationship between the inputs and outputs is not trivial. Neural networks have shown to have good performance on complex datasets due to their ability to bend the decision boundaries - something that basic regressions can only achieve with advanced featurization. Since a basic version of a neural network takes slightly more than 100 LoC to implement, it's smarter to use it rather than spend days trying to pick good features.
 
-For the above models have to fight issues like overfitting, underfitting or large training times, that prevents us from effectively using the chosen models. For overfitting we choose to use a regularization parameter and we analyze it's effectiveness later on in the paper. We tackle the large training times of neural networks by changing the learning method from gradient descent to stochastic gradient descent which proved to be a great improvement.
+For the above models have to fight issues like overfitting, underfitting or large training times, that prevents us from effectively using the chosen models. We prevent overfitting by use of regularization. We tackle the large training times of neural networks by changing the learning method from gradient descent to stochastic gradient descent which proved to be a great improvement.
 
 \section{Data analysis}
 Before employing any model, we proceed to do data imputation and cleaning procedures.
@@ -59,7 +59,6 @@ Throughout the competition we've tried many variants of the new features and cho
 	Adding them to linear regression shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. We then try adding them to a 1 hidden layer NN and the result goes up from X to Y. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our neural network.
 	
 \item[Cosines of angles and pairwise angle differences] \ \\
-	Applying sin(x) or cos(x) only makes sense for angles. We also discovered that doing it for pairwise differences is quite helpful.
 	
 \item[Converting PRI\_jet\_num column using one-hot encoding] \ \\
 	This is the only categorical feature in the dataset with only 4 options.
@@ -93,11 +92,20 @@ In our gradual progress, we hit a few milestones that are defined by different r
 
 \section{Final model}
 
-TODO
+Our final model is based on neural networks and we would like to highlight the most interesting details behind its training and architecture:
+\begin{itemize}
+\item The network is composed of interchanging fully-connected and ReLU layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity - backpropagation is very easy to implement for it.
+\item We use the softmax loss function - we've tried both hinge and softmax losses, with a tiny margin softmax performed better.
+\item Originally, we were using full gradient descent since the data was small and fit into RAM. However, we later discovered that with minibatches we can train the network to achieve the same validation score in 5x less time! Additionally, we use RMSprop update rule for the weights - this helped to speed up convergence dramatically as well.
+\item We found that 2+ layer networks achieve roghly the same performance in the optimal condition. Thus, we chose to stick with 2 layer neural networks as they are faster to train.
+\item At one moment we found a very interesting problem with NNs - we were unable to train NNs with 2+ hidden layers of certain sizes, especially those were hidden layer size was small (under 50 "neurons"). With small initial weights the network just wouldn't get trained (accuracy after 100 iterations is the same as in the beginning) and with large weights the error would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where instead of just making each weight be Gaussian(0, 1) times a constant, we additionally divided it by the square root of the number of layer inputs (ADD CITATION). See the reference for detailed explanation of why this helps, it's quite interesting.
+\item We optimized each of the NNs parameters using grid search - since this could take hours in some cases, we used a remote AWS server.
+\item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of ??? such neural networks. Each of these NNs was trained on 80\% of the data. Afterwards, the predictions of these networks are combined using majority voting.
+\end{itemize}
 
 \section{Conclusion}
 
-Throughout the course of the competition we not only applied algorithms seen in class to a real-world dataset, but also learned about other models and techniques, such as decision trees, neural networks and bagging. We also discovered why minibatch gradient descent is in practice preferable to regular GD; how finicky can NNs be to poor weight initialization; and many other interesting practical nits.
+Throughout the course of the competition we not only applied algorithms seen in class to a real-world dataset, but also learned about other models and techniques, such as decision trees, neural networks and bagging. We  discovered many practical details of using neural networks.
 While we stopped short of our goal of building ensembles of decision trees and neural networks, we still ended up with a model that allowed us to hold the \#1 spot during the entire competition.
 
 \bibliographystyle{IEEEtran}

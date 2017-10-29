@@ -44,12 +44,12 @@ def run(validation, classify_test):
 
   for idx in range(NUM_NETS):
     print('Idx is ' + str(idx))
-    indices = np.random.choice(X_train.shape[0], 160000)
+    indices = np.random.choice(X_train.shape[0], 200000)
     Xt = X_train[indices,:]
     nn1 = SimpleNet([600, 600], reg=0.0001, input_size=Xt.shape[1])
     # Train the net
-    nn1.fit(Xt, y_train[indices], verbose=False, num_iters=8000, learning_rate=0.01, update_strategy='rmsprop',
-      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9995)
+    nn1.fit(Xt, y_train[indices], verbose=True, num_iters=3000, learning_rate=0.01, update_strategy='rmsprop',
+      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.995)
 
     all_nets.append(nn1)
 
@@ -97,4 +97,4 @@ def run(validation, classify_test):
 
 if __name__ == '__main__':
   np.random.seed(777)
-  run(True, False)
+  run(False, True)

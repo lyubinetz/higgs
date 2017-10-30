@@ -36,25 +36,24 @@ While the above models are good for certain basic tasks, they are rarely used fo
 Before employing any model, we proceed to do data imputation and cleaning procedures.
 
 To start with, the provided dataset has a problem with missing values. After basic exploratory analysis, we see that missing values are split into three groups and either the entire group is missing or the entire group is present. These column groups are:
-\begin{description}
-	\item[First group] \ \\
-	DER\_[deltaeta,mass,prodeta]\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_[pt,eta,phi],
-	\item[Second group] \ \\
-	PRI\_jet\_leading\_[pt,eta,phi],
-	\item[Column 0] \ \\
-	DER\_mass\_MMC
-\end{description}
+
+\begin{itemize}
+	\item First group: DER\_[deltaeta,mass,prodeta]\_jet\_jet, DER\_lep\_eta\_centrality, PRI\_jet\_subleading\_[pt,eta,phi],
+	\item Second group :  PRI\_jet\_leading\_[pt,eta,phi],
+	\item Column 0 : DER\_mass\_MMC
+\end{itemize}
+
 After reading the documentation \cite{higgsChallenge}, we find that these values are not missing at random, but rather undefined when PRI\_jet\_num $\leq 1$ for the first group of columns, undefined when PRI\_jet\_num = 0 for the second group of columns and undefined when the event is too far from the expected topology for DER\_mass\_MMC. Column 0 (DER\_mass\_MMC) is particularly interesting - if we look at b/s ratio for cases when it is undefined, we see that over 90\% have the 'b' value. Thus, this is a very important signal in itself and we should not just discard it.
   
 We have tried various strategies for what to put in place of missing values - means, medians, max value + $\epsilon$ and even some class-based replacement (all over columns). Out of all these, using means has shown the best performance for neural networks. It is worth mentioning that NNs are less finicky to replacement strategy than other models - for example they correctly recognize that most column 0 entries with missing values should be a 'b' as long as we impute the same value for training and testing datasets.
 
-Lastly, before proceeding to featurization, we have to standardize the data. This is crucial for models like linear regression, where without this low-magnitude columns will just get ignored. This is also important for neural networks, where having data in Gaussian(0, 1) form improves performance. It's worth mentioning that we compute means and variances for standardization across merged training and test datasets (without missing values) and use the those to standardize both. Otherwise, we could suffer from distribution differences between some columns in train and test, leading to poor results.
+Lastly, before proceeding to featurization, we have to standardize the data. This is crucial for models like linear regression, where without this low-magnitude columns will just get ignored. This is also important for neural networks, where having data in Gaussian(0, 1) form improves performance. It's worth mentioning that we compute means and variances for standardization across merged training and test datasets (without missing values) and use those to standardize both. Otherwise, we could suffer from distribution differences between some columns in train and test, leading to poor results.
 
 \section{Feature augmentation}
 Throughout the competition we've tried many variants of the new features and chose the ones that have shown to provide the biggest benefits to our final model. In the beginning, the process of deciding whether a new set of features was good involved doing a simple cross validation, but when result crossed the 0.84 mark, we started using 5-fold cross-validation to battle variance. The final list of used features is the following:
 \begin{description}
 \item[Squares of the original features values] \ \\
-	Adding them to linear regression shows an improvement from 0.74 to 0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our NN.
+	Adding them to linear regression shows an improvement from 0.74 to 0.77. This is expected, as adding polynomial features increases the representational power of linear models. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our NN.
 	
 \item[Cosines of angles and pairwise angle differences] \ \\
 	
@@ -63,14 +62,14 @@ Throughout the competition we've tried many variants of the new features and cho
 	
 \item[Radial Basis Features] \ \\
 	For columns X and Y that are G(0, 1), we add column with $exp(-\frac{||X-Y||^2}{2})$.
-	RBFs \cite{rbf_book} \cite{rbf_wiki} are typically used to extend Support Vector Machines. We tried adding them to our neural network, which resulted in a minor improvement.
+	RBFs \cite{rbf_book} \cite{rbf_wiki} are typically used to extend Support Vector Machines.
 \end{description}
 
 As a note to the rather concise feature augmentation pipeline, using a neural network allows us to pus less effort into this process compared to using a linear model. In this reason, neural networks are known to have ability to fit complex data shapes as a result of non-linearity, thus sparing us from searching for features that can allow simple regressions to achieve this behavior.
 
 \section{Benchmarks}
 
-In our gradual progress, we hit a few milestones that are defined by different results in the evaluation of our models. We present in Table \ref{table:models_benchmarks} hereunder the accuracies each model used by us achieved. For the linear and ridge regression we used the normal equations to get the minimum weight corresponding to the mean squared loss. For the latter one, we used regularization parameter $\lambda = 0.01$. For logistic regression, we used full gradient descent in order to optimize the maximum likelihood criterion. Over all the runs, we used a regularization parameter $\lambda = 0.01$, weights initialized to zero, 500 iterations and a learning step $\gamma = 1e^{-6}$
+In our gradual progress, we hit a few milestones that are defined by different results in the evaluation of our models. We present in Table \ref{table:models_benchmarks} the accuracies each model used by us achieved. For the linear and ridge regression we used the normal equations to get the minimum weight corresponding to the mean squared loss. For the latter one, we used regularization parameter $\lambda = 0.01$. For logistic regression, we used full gradient descent in order to optimize the maximum likelihood criterion. Over all the runs, we used a regularization parameter $\lambda = 0.01$, weights initialized to zero, 500 iterations and a learning step $\gamma = 1e^{-6}$
 
 \begin{table}[h]
 	\begin{tabular}{ |M{1.5cm}|M{1.5cm}|M{1.5cm}|M{1.8cm}|  }
@@ -96,10 +95,10 @@ Our final model is a bag of 6 identically structured neural networks and we woul
 \item Each network is composed of interchanging fully-connected and ReLU \cite{relu} layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity. We use L2 regularization.
 \item We use the softmax \cite{softmax} loss function - we've tried both hinge and softmax losses, with a tiny margin softmax performed better.
 \item Originally, we were using full gradient descent since the data was small and fit into RAM. However, we later discovered that with minibatches we can train the network to achieve the same validation score in 5x less time! Additionally, we use RMSprop \cite{rmsprop} update rule for the weights - this helped to speed up convergence dramatically as well.
-\item We found that all 2+ hidden layer networks achieve roghly the same performance in the optimal condition. Thus, we chose to stick with 2 hidden layer neural networks (versus more layers).
-\item At one moment we found that we can't train NNs with 2+ hidden layers of certain sizes, especially those where hidden layer size was small (under 50 "neurons"). With small initial weights nothing would change during training, and with large weights the loss would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by $\sqrt{\frac{2}{n}}$, where n is the number of inputs to the layer \cite{calibratin_variance_blog} \cite{calibrating_variance_paper}. See references for detailed explanations of this method.
-\item We optimized each NN parameter using grid search - since this takes hours, we used a remote AWS server.
-\item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of 6 such neural networks. Each of these NNs was trained on 80\% of the data. Afterwards, the predictions of these networks are combined using weighted majority voting.
+\item We found that all 2+ hidden layer networks achieve roughly the same performance in the optimal condition. Thus, we chose to stick with 2 hidden layer neural networks (versus more layers) with 600 neurons each.
+\item At one moment we found that we can't train NNs with 2+ hidden layers of certain sizes, especially those where hidden layer size was small (under 50 "neurons"). With small initial weights nothing would change during training, and with large weights the loss would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeros, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by $\sqrt{\frac{2}{n}}$, where n is the number of inputs to the layer \cite{calibratin_variance_blog} \cite{calibrating_variance_paper}. See references for detailed explanations of this method.
+\item We optimized each NN parameter (including structure) using grid search - since this takes hours, we used a remote AWS server.
+\item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of 6 such neural networks. Each of these NNs was trained on 80\% of the data, with a mini-batch size of 600 for 4500 iterations. Afterwards, the predictions of these networks are combined using weighted majority voting.
 \end{itemize}
 
 \section{Conclusion}

@@ -8,7 +8,7 @@ def compute_mse_loss(y, tx, w):
   '''
   return np.power(y - tx.dot(w), 2).sum() / (2 * y.shape[0])
 
-def compute_mean_squared_gradient(y, tx, w):
+def compute_mean_squares_gradient(y, tx, w):
   '''Calculate the gradient of the the mean squared error function with respect to w
   Parameters:
       y = labels, numpy column vector
@@ -17,9 +17,6 @@ def compute_mean_squared_gradient(y, tx, w):
 
   Return:
       Gradient value computed as -1/len(y) * dot(tx.T, e) where e = y - dot(tx, w)
-
-  Obs:
-      <x,y> = inner product of vectors x and y
   '''
   e = y - tx.dot(w)
   return -tx.T.dot(e)/y.shape[0]
@@ -46,7 +43,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
   for n_iter in range(max_iters):
       # compute loss and gradient
       loss = compute_mse_loss(y, tx, w)
-      gradient = compute_mean_squared_gradient(y, tx, w)
+      gradient = compute_mean_squares_gradient(y, tx, w)
       # update parameters
       w = w - gamma * gradient
 
@@ -76,7 +73,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
     for minibatch_y, minibatch_x in batch_iter(y, tx, batch_size=1, num_batches=1):
       # compute loss and gradient
       loss = compute_mse_loss(y, tx, w)
-      gradient = compute_mean_squared_gradient(minibatch_y, minibatch_x, w)
+      gradient = compute_mean_squares_gradient(minibatch_y, minibatch_x, w)
       # update parameters
       w = w - gamma * gradient
 

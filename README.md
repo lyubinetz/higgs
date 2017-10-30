@@ -26,21 +26,17 @@ If you're using Windows, some steps might differ.
 3. Numpy
 
 #### Download and run the project
-1. Clone the repository
+1. Install numpy
 
   ```
-  git clone https://github.com/lyubinetz/higgs.git
+  pip install numpy
   ```
 2. Change current directory to the project's folder
 
   ```
   cd higgs
   ```
-3. Install numpy
-
-  ```
-  pip install numpy
-  ```
+3. Make sure **train.csv** and **test.csv** files are located in the **datasets/** folder. If such folder does not exist, create it at the root of project's folder then copy the **train.csv** and **test.csv** files there.
 4. Run 
 
   ```

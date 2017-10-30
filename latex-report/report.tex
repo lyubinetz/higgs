@@ -12,7 +12,7 @@
 \usepackage{diagbox}
 
 \begin{document}
-\title{Getting over 84\% in finding the Higgs boson}
+\title{Getting over 84\% accuracy in finding the Higgs boson}
 
 \author{
 	Baetu Ciprian, Volodymyr Lyublinets, Musuroi Doru
@@ -30,9 +30,7 @@ We start with no featurization and basic models as linear regression, ridge regr
 We then turn our heads towards feature augmentation and add a polynomial basis of degree 2 for each feature. As expected, the accuracy increases as presented in Table \ref{table:models_benchmarks}. 
 Then we dive deeper into data analysis and we try to understand the features and how to combine them. This results in the final feature augmentation pipeline presented later in the report. The results can be seen in the Table \ref{table:models_benchmarks}. 
 
-While the above models are good for certain basic tasks, they are rarely used for more complex datasets such as this one, where the relationship between the inputs and outputs is not trivial. Neural networks have shown to have good performance on complex datasets due to their ability to bend the decision boundaries - something that basic regressions can only achieve with advanced featurization. Since a basic version of a neural network takes slightly more than 100 LoC to implement, it's smarter to use it rather than spend days trying to pick good features.
-
-For the above models have to fight issues like overfitting, underfitting or large training times, that prevents us from effectively using the chosen models. We prevent overfitting by use of regularization. We tackle the large training times of neural networks by changing the learning method from gradient descent to stochastic gradient descent which proved to be a great improvement.
+While the above models are good for certain basic tasks, they are rarely used for more complex datasets such as this one, where the relationship between the inputs and outputs is not trivial. Neural networks have shown to have good performance on complex datasets due to their ability to bend the decision boundaries - something that basic regressions can only achieve with advanced featurization. Since a basic version of a neural network takes slightly more than 100 LoC to implement, it's smarter to use it rather than spend days trying to pick good features. To make NNs work we have fought issues such as overfitting (prevented with regularization) and large training times (prevented by using mini-batch SGD).
 
 \section{Data analysis}
 Before employing any model, we proceed to do data imputation and cleaning procedures.
@@ -56,7 +54,7 @@ Lastly, before proceeding to featurization, we have to standardize the data. Thi
 Throughout the competition we've tried many variants of the new features and chose the ones that have shown to provide the biggest benefits to our final model. In the beginning, the process of deciding whether a new set of features was good involved doing a simple cross validation, but when result crossed the 0.84 mark, we started using 5-fold cross-validation to battle variance. The final list of used features is the following:
 \begin{description}
 \item[Squares of the original features values] \ \\
-	Adding them to linear regression shows an improvement from ~0.74 to ~0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our NN.
+	Adding them to linear regression shows an improvement from 0.74 to 0.77. This is quite expected, as adding polynomial features increases the representational power of linear models. Neural network never multiplies the data with itself, so it's reasonable that squared features are useful for it too. Adding higher power features does not lead to additional improvements for our NN.
 	
 \item[Cosines of angles and pairwise angle differences] \ \\
 	
@@ -93,21 +91,21 @@ In our gradual progress, we hit a few milestones that are defined by different r
 
 \section{Final model}
 
-Our final model is based on neural networks and we would like to highlight the most interesting details behind its training and architecture:
+Our final model is a bag of 6 identical neural networks and we would like to highlight the most interesting details behind their training and architecture:
 \begin{itemize}
-\item The network is composed of interchanging fully-connected and ReLU \cite{relu} layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity. We use L2 regularization.
+\item Each network is composed of interchanging fully-connected and ReLU \cite{relu} layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity. We use L2 regularization.
 \item We use the softmax \cite{softmax} loss function - we've tried both hinge and softmax losses, with a tiny margin softmax performed better.
 \item Originally, we were using full gradient descent since the data was small and fit into RAM. However, we later discovered that with minibatches we can train the network to achieve the same validation score in 5x less time! Additionally, we use RMSprop \cite{rmsprop} update rule for the weights - this helped to speed up convergence dramatically as well.
 \item We found that all 2+ hidden layer networks achieve roghly the same performance in the optimal condition. Thus, we chose to stick with 2 hidden layer neural networks (versus more layers).
-\item At one moment we found a very interesting problem with NNs - we were unable to train NNs with 2+ hidden layers of certain sizes, especially those were hidden layer size was small (under 50 "neurons"). With small initial weights the network just wouldn't get trained (accuracy after 100 iterations is the same as in the beginning) and with large weights the error would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by sqrt(2.0/n), where n is the number of inputs to the layer \cite{calibratin_variance_blog} \cite{calibrating_variance_paper}. See references for detailed explanation of why this helps.
-\item We optimized each of the NNs parameters using grid search - since this could take hours in some cases, we used a remote AWS server.
-\item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of ??? such neural networks. Each of these NNs was trained on 80\% of the data. Afterwards, the predictions of these networks are combined using weighted majority voting.
+\item At one moment we found that we can't train NNs with 2+ hidden layers of certain sizes, especially those where hidden layer size was small (under 50 "neurons"). With small initial weights nothing would change during training, and with large weights the loss would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by sqrt(2.0/n), where n is the number of inputs to the layer \cite{calibratin_variance_blog} \cite{calibrating_variance_paper}. See references for detailed explanations.
+\item We optimized each NN parameter using grid search - since this takes hours, we used a remote AWS server.
+\item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of 6 such neural networks. Each of these NNs was trained on 80\% of the data. Afterwards, the predictions of these networks are combined using weighted majority voting.
 \end{itemize}
 
 \section{Conclusion}
 
 Throughout the course of the competition we not only applied algorithms seen in class to a real-world dataset, but also learned about other models and techniques, such as decision trees, neural networks and bagging. We  discovered many practical details of using neural networks.
-While we stopped short of our goal of building ensembles of decision trees and neural networks, we still ended up with a model that allowed us to hold the \#1 spot during the entire competition.
+While we stopped short of our goal of building ensembles of decision trees and neural networks, we still ended up with a model that allowed us to hold the top spot during the entire competition.
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}

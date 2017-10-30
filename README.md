@@ -1,5 +1,36 @@
 # higgs
-EPFL ML Project 1 - detecting the Higgs Boson. Here is the code structure:
+EPFL ML Project 1 - detecting the Higgs Boson.
+
+### How to install and run (*nix friendly guide)
+If you're using Windows, some steps might differ.
+
+#### Prerequisites
+
+1. Python 3
+
+2. PIP
+
+3. Numpy
+
+#### Usage instructions
+1. Install numpy
+
+  ```
+  pip3 install numpy
+  ```
+2. Change current directory to the project's folder
+
+  ```
+  cd higgs
+  ```
+3. Make sure **train.csv** and **test.csv** files are located in the **datasets/** folder. If such folder does not exist, create it at the root of project's folder then copy the **train.csv** and **test.csv** files there.
+4. Run 
+
+  ```
+  python3 run.py
+  ```
+  
+### Code structure
 
 * run.py - this file contains the final pipeline, which is a bag of neural networks. It is a simplified version of neural_bagging.py.
 * run_nn.py - a pipeline that trains a single neural network. Depending on the options specified inside the file, it either runs it on a validation set and prints the result, or on test set and produces predition.csv
@@ -14,31 +45,3 @@ EPFL ML Project 1 - detecting the Higgs Boson. Here is the code structure:
 * hyperparapemeter_nn_grid_search.py - Grid search utility to pick the best hyperparameters.
 * DecisionTree.py - decision tree.
 
-### How to install and run (*nix friendly guide)
-If you're using Windows, some steps might differ.
-
-#### Prerequisites
-
-1. Python 3
-
-2. PIP
-
-3. Numpy
-
-#### Download and run the project
-1. Install numpy
-
-  ```
-  pip install numpy
-  ```
-2. Change current directory to the project's folder
-
-  ```
-  cd higgs
-  ```
-3. Make sure **train.csv** and **test.csv** files are located in the **datasets/** folder. If such folder does not exist, create it at the root of project's folder then copy the **train.csv** and **test.csv** files there.
-4. Run 
-
-  ```
-  python3 run.py
-  ```

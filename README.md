@@ -13,3 +13,36 @@ EPFL ML Project 1 - detecting the Higgs Boson. Here is the code structure:
 * featurization.py - Featurization pipeline.
 * hyperparapemeter_nn_grid_search.py - Grid search utility to pick the best hyperparameters.
 * DecisionTree.py - decision tree.
+
+### How to install and run (*nix friendly guide)
+If you're using Windows, some steps might differ.
+
+#### Prerequisites
+
+1. Python 3
+
+2. PIP
+
+3. Numpy
+
+#### Download and run the project
+1. Clone the repository
+
+  ```
+  git clone https://github.com/lyubinetz/higgs.git
+  ```
+2. Change current directory to the project's folder
+
+  ```
+  cd higgs
+  ```
+3. Install numpy
+
+  ```
+  pip install numpy
+  ```
+4. Run 
+
+  ```
+  python3 run.py
+  ```

@@ -166,8 +166,6 @@ def predict_labels(weights, data):
   y_pred[np.where(y_pred <= 0.5)] = 0 # Note that this differs from what was given in github - we use 0
   y_pred[np.where(y_pred > 0.5)] = 1
 
-
-
   return y_pred
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):

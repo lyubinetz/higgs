@@ -23,8 +23,8 @@ If you're using Windows, some steps might differ.
   ```
   cd higgs
   ```
-3. Make sure **train.csv** and **test.csv** files are located in the **datasets/** folder. If such folder does not exist, create it at the root of project's folder then copy the **train.csv** and **test.csv** files there.
-4. Run 
+3. Create **datasets/** folder at the root of the project folder and copy there the **train.csv** and **test.csv** files.
+4. Run the following command:
 
   ```
   python3 run.py

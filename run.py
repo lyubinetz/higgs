@@ -47,9 +47,9 @@ def run(verbose_training):
     Xt = X_train[indices,:]
 
     # Train the net
-    nn = SimpleNet([600, 600], reg=0.00015, input_size=Xt.shape[1])
+    nn = SimpleNet([600, 600], reg=0.0001, input_size=Xt.shape[1])
     nn.fit(Xt, y_train[indices], verbose=verbose_training, num_iters=4000, learning_rate=0.01, update_strategy='rmsprop',
-      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.995)
+      optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9995)
 
     y_pred_val = nn.predict(Xt)
     num_correct = (y_pred_val == y_train[indices]).sum()

@@ -34,7 +34,7 @@ def run(validation, classify_test):
 
   nn = SimpleNet([600, 600], reg=0.0001, input_size=X_train.shape[1])
   # Train the net
-  nn.fit(X_train, y_train, verbose=True, num_iters=3000, learning_rate=0.01, update_strategy='rmsprop',
+  nn.fit(X_train, y_train, verbose=True, num_iters=4000, learning_rate=0.01, update_strategy='rmsprop',
     optimization_strategy='sgd', mini_batch_size=600, lr_decay=0.9995)
 
   y_pred_val = nn.predict(X_train)

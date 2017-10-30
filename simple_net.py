@@ -2,7 +2,7 @@ import numpy as np
 from helpers import _get_batch_indices
 
 '''
-This file contains functions for the neural network implementation.
+This file contains a simple neural network implementation.
 It is loosely based on cs231n implementation that Volodymyr wrote - in the
 course they used a much nicer structure with separate functions for various
 layers, but I just stuck my forard and backward passes into the

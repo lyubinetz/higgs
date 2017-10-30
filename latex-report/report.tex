@@ -65,7 +65,7 @@ Throughout the competition we've tried many variants of the new features and cho
 	
 \item[Radial Basis Features] \ \\
 	For columns X and Y that are G(0, 1), we add column with $exp(-\frac{||X-Y||^2}{2})$.
-	RBF features are typically used to extend Support Vector Machines. We tried adding them to our neural network, which resulted in a minor improvement.
+	RBFs \cite{rbf_book} \cite{rbf_wiki} are typically used to extend Support Vector Machines. We tried adding them to our neural network, which resulted in a minor improvement.
 \end{description}
 
 As a note to the rather concise feature augmentation pipeline, using a neural network allows us to pus less effort into this process compared to using a linear model. In this reason, neural networks are known to have ability to fit complex data shapes as a result of non-linearity, thus sparing us from searching for features that can allow simple regressions to achieve this behavior.
@@ -95,11 +95,11 @@ In our gradual progress, we hit a few milestones that are defined by different r
 
 Our final model is based on neural networks and we would like to highlight the most interesting details behind its training and architecture:
 \begin{itemize}
-\item The network is composed of interchanging fully-connected and ReLU (ADD CITATION) layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity. We use L2 regularization.
-\item We use the softmax loss function - we've tried both hinge and softmax losses, with a tiny margin softmax performed better.
-\item Originally, we were using full gradient descent since the data was small and fit into RAM. However, we later discovered that with minibatches we can train the network to achieve the same validation score in 5x less time! Additionally, we use RMSprop (ADD reference) update rule for the weights - this helped to speed up convergence dramatically as well.
+\item The network is composed of interchanging fully-connected and ReLU \cite{relu} layers (with no ReLU at the very end). We allow arbitrary number of hidden layers. ReLU was chosen as an activation function due to its simplicity. We use L2 regularization.
+\item We use the softmax \cite{softmax} loss function - we've tried both hinge and softmax losses, with a tiny margin softmax performed better.
+\item Originally, we were using full gradient descent since the data was small and fit into RAM. However, we later discovered that with minibatches we can train the network to achieve the same validation score in 5x less time! Additionally, we use RMSprop \cite{rmsprop} update rule for the weights - this helped to speed up convergence dramatically as well.
 \item We found that all 2+ hidden layer networks achieve roghly the same performance in the optimal condition. Thus, we chose to stick with 2 hidden layer neural networks (versus more layers).
-\item At one moment we found a very interesting problem with NNs - we were unable to train NNs with 2+ hidden layers of certain sizes, especially those were hidden layer size was small (under 50 "neurons"). With small initial weights the network just wouldn't get trained (accuracy after 100 iterations is the same as in the beginning) and with large weights the error would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by sqrt(2.0/n), where n is the number of inputs to the layer. (ADD CITATION). See the reference for detailed explanation of why this helps.
+\item At one moment we found a very interesting problem with NNs - we were unable to train NNs with 2+ hidden layers of certain sizes, especially those were hidden layer size was small (under 50 "neurons"). With small initial weights the network just wouldn't get trained (accuracy after 100 iterations is the same as in the beginning) and with large weights the error would go to infinity. The reason for this lies in poor weight initialization - in the former case at the last layer we end up with essentially zeroes, while in the latter the numbers are enormous. Ideally, one uses a batch-normalization layer to avoid this, but it is non-trivial to implement. Thus, we dealt with this problem by good weight initialization, where each weight is G(0,1) multiplied by sqrt(2.0/n), where n is the number of inputs to the layer \cite{calibratin_variance_blog} \cite{calibrating_variance_paper}. See references for detailed explanation of why this helps.
 \item We optimized each of the NNs parameters using grid search - since this could take hours in some cases, we used a remote AWS server.
 \item The best NN that we trained achieved around 84.4\% +/- 0.2\%. To further reduce variance, our final submission is a bag of ??? such neural networks. Each of these NNs was trained on 80\% of the data. Afterwards, the predictions of these networks are combined using weighted majority voting.
 \end{itemize}
@@ -108,7 +108,6 @@ Our final model is based on neural networks and we would like to highlight the m
 
 Throughout the course of the competition we not only applied algorithms seen in class to a real-world dataset, but also learned about other models and techniques, such as decision trees, neural networks and bagging. We  discovered many practical details of using neural networks.
 While we stopped short of our goal of building ensembles of decision trees and neural networks, we still ended up with a model that allowed us to hold the \#1 spot during the entire competition.
-\cite{Hinton,calibratin_variance_blog,calibrating_variance_paper,higgsChallenge,rbf_book,rbf_wiki,relu,rmsprop,softmax}
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
